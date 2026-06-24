@@ -1,28 +1,32 @@
 /*
-Long story short, this is a producer class
+Producer class
 */
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.BlockingQueue;
 
 public class FileScanner implements Runnable {
-    private final BlockingQueue<Path> queue;
     private final Path root;
+    private final BlockingQueue<Path> queue;
     
-    // Responsible for 
     public FileScanner(Path root, BlockingQueue<Path> queue) {
         this.root = root;
         this.queue = queue;
     }
 
-    // For threading
     @Override
     public void run() {
 
     }
 
-    // Traverse file path
-    private void scan() throws Exception {
-        
+    // Scans an entire directory and puts the Path(s) in the BlockingQueue
+    private void scan(Path dir) throws Exception {
+        Files.list(dir).forEach(path -> {
+            try {
+                if (Files.isDirectory(path)) {scan(path);}
+                else {queue.put(path);}
+            } catch (Exception ignored) {}
+        });
     }
 }
