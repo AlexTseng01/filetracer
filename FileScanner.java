@@ -4,6 +4,7 @@ Producer class
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.concurrent.BlockingQueue;
 
 public class FileScanner implements Runnable {
@@ -17,10 +18,15 @@ public class FileScanner implements Runnable {
 
     @Override
     public void run() {
-
+        try {
+            scan(root);
+            queue.put(Paths.get("__DONE__"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
-    // Scans an entire directory and puts the Path(s) in the BlockingQueue
+    // Scans an entire directory, puts Paths in a BlockingQueue, consumer class CONSUMES the stuff
     private void scan(Path dir) throws Exception {
         Files.list(dir).forEach(path -> {
             try {

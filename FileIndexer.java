@@ -2,7 +2,9 @@
 Consumer class
 */
 
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.concurrent.BlockingQueue;
 
 public class FileIndexer implements Runnable {
