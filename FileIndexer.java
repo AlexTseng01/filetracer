@@ -2,9 +2,7 @@
 Consumer class
 */
 
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.concurrent.BlockingQueue;
 
 public class FileIndexer implements Runnable {
@@ -18,6 +16,21 @@ public class FileIndexer implements Runnable {
 
     @Override
     public void run() {
+        try {
+            while (true) {
+                Path path = queue.take();
 
+                // Puts the poison pill back into the queue for other threads to finish
+                if (path.toString().equals("__DONE__")) {
+                    queue.put(path);
+                    break;
+                }
+
+                // Inserts a path into the database as long as the thread does not reach a poison pill
+                db.insert(path);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
