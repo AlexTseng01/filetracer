@@ -30,9 +30,13 @@ public class FileScanner implements Runnable {
     private void scan(Path dir) throws Exception {
         Files.list(dir).forEach(path -> {
             try {
-                if (Files.isDirectory(path)) {scan(path);}
-                else {queue.put(path);}
-            } catch (Exception ignored) {}
+                queue.put(path); // queue first because it needs to put all paths into the queue
+                if (Files.isDirectory(path)) {
+                    scan(path);
+                }
+            } catch (Exception ignored) {
+                // skipping because it will flood the terminal
+            }
         });
     }
 }
