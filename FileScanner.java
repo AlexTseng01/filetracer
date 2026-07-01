@@ -4,9 +4,9 @@ Producer class
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.nio.file.AccessDeniedException;
 
 public class FileScanner implements Runnable {
     private final BlockingQueue<Path> dirQueue; // All producer threads share
@@ -59,8 +59,11 @@ public class FileScanner implements Runnable {
                         dirQueue.put(path);
                     }
                 } catch (Exception ignored) {
+
                 }
             });
+        } catch (AccessDeniedException e) {
+            System.out.println("Access denied: " + dir);
         }
     }
 }
