@@ -9,8 +9,16 @@ import java.awt.GridLayout;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JScrollPane;
 import javax.swing.JProgressBar;
@@ -45,7 +53,9 @@ public class MainFrame extends JFrame {
 	private JLabel countEntriesLabel;
 	private JLabel scanTimeLabel;
 	private JLabel throughputLabel;
-
+	
+    private static final String DB_URL = "jdbc:sqlite:file_index.db";
+    
 	/**
 	 * Launch the application.
 	 */
@@ -135,6 +145,27 @@ public class MainFrame extends JFrame {
 		JButton cleanButton = new JButton("Clean");
 		cleanButton.setBounds(109, 11, 89, 23);
 		toolPanel.add(cleanButton);
+		cleanButton.addActionListener(e -> {
+			try (Connection connection = DriverManager.getConnection(DB_URL); Statement stmt = connection.createStatement()) {
+				connection.setAutoCommit(true);
+				stmt.execute("PRAGMA foreign_keys = OFF");
+				ResultSet rs = stmt.executeQuery("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'");
+				List<String> tables = new ArrayList<>();
+				while (rs.next()) {
+					tables.add(rs.getString(1));
+				}
+				rs.close();
+				
+				for (String table : tables) {
+					stmt.executeUpdate("DELETE FROM \"" + table + "\"");
+				}
+				
+				stmt.execute("PRAGMA foreign_keys = ON");
+				System.out.println("CLEARED");
+			} catch (Exception ex) {
+				ex.printStackTrace();
+			}
+		});
 		
 		JLabel directoryLabel = new JLabel("Directory:");
 		directoryLabel.setBounds(208, 17, 58, 14);
