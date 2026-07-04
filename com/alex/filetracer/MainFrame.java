@@ -49,10 +49,12 @@ public class MainFrame extends JFrame {
 	
 	private double time = 0;
 	private int entries = 0;
+	private String dir = "";
 	
 	private JLabel countEntriesLabel;
 	private JLabel scanTimeLabel;
 	private JLabel throughputLabel;
+	private JProgressBar progressBar;
 	
     private static final String DB_URL = "jdbc:sqlite:file_index.db";
     
@@ -105,7 +107,7 @@ public class MainFrame extends JFrame {
 		contentPane.add(progressPanel);
 		progressPanel.setLayout(new GridLayout(0, 1, 0, 0));
 		
-		JProgressBar progressBar = new JProgressBar();
+		progressBar = new JProgressBar();
 		progressBar.setForeground(Color.GREEN);
 		progressPanel.add(progressBar);
 		
@@ -117,14 +119,17 @@ public class MainFrame extends JFrame {
 		JButton scanButton = new JButton("Scan");
 		scanButton.setBounds(10, 11, 89, 23);
 		toolPanel.add(scanButton);
+		
 		scanButton.addActionListener(e -> {
-		    Path origin = Paths.get(directoryField.getText().trim());
+		    Path origin = Paths.get(dir);
 
 		    new Thread(() -> {
 		        tracerApp.runScan(origin, new ScanListener() {
 		            @Override
 		            public void onProgress(int count) {
 		                SwingUtilities.invokeLater(() -> {
+		                	progressBar.setValue(count);
+		                	progressBar.setString(count + " files");
 		                	entries = count;
 		                });
 		            }
@@ -136,6 +141,8 @@ public class MainFrame extends JFrame {
 		                	countEntriesLabel.setText("Entries count: " + entries);
 		                	scanTimeLabel.setText("Scan time: " + String.format("%.3f", time));
 		                	throughputLabel.setText("Throughput: " + (int)(entries / time) + " files/sec");
+		                	progressBar.setString("Done");
+		                	progressBar.setValue(progressBar.getMaximum());
 		                });
 		            }
 		        });
@@ -145,6 +152,7 @@ public class MainFrame extends JFrame {
 		JButton cleanButton = new JButton("Clean");
 		cleanButton.setBounds(109, 11, 89, 23);
 		toolPanel.add(cleanButton);
+		
 		cleanButton.addActionListener(e -> {
 			try (Connection connection = DriverManager.getConnection(DB_URL); Statement stmt = connection.createStatement()) {
 				connection.setAutoCommit(true);
@@ -161,7 +169,14 @@ public class MainFrame extends JFrame {
 				}
 				
 				stmt.execute("PRAGMA foreign_keys = ON");
-				System.out.println("CLEARED");
+				
+				SwingUtilities.invokeLater(() -> {
+                	time = 0;
+                	entries = 0;
+                	countEntriesLabel.setText("Entries count: " + entries);
+                	scanTimeLabel.setText("Scan time: " + String.format("%.3f", time));
+                	throughputLabel.setText("Throughput: " + (int)(entries / time) + " files/s");
+                });
 			} catch (Exception ex) {
 				ex.printStackTrace();
 			}
@@ -175,6 +190,11 @@ public class MainFrame extends JFrame {
 		directoryField.setBounds(276, 11, 186, 20);
 		toolPanel.add(directoryField);
 		directoryField.setColumns(10);
+		
+		directoryField.addActionListener(e -> {
+		    dir = directoryField.getText().trim();
+		    System.out.println("Directory set to: " + dir);
+		});
 		
 		JLabel searchLabel = new JLabel("Search:");
 		searchLabel.setBounds(208, 51, 58, 14);
@@ -225,7 +245,7 @@ public class MainFrame extends JFrame {
 		infoPanel.add(scanTimeLabel);
 		
 		throughputLabel = new JLabel("Throughput:");
-		throughputLabel.setBounds(286, 0, 128, 24);
+		throughputLabel.setBounds(286, 0, 500, 24);
 		infoPanel.add(throughputLabel);
 		
 		toolPanel.setBorder(BorderFactory.createDashedBorder(Color.GRAY));

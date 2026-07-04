@@ -69,8 +69,6 @@ public class FileTracerApp {
         }
 
         // Thread coordination
-        System.out.println("Waiting on threads to finish...");
-
         while (true) {
             if (dirQueue.isEmpty() && activeScanners.get() == 0) {
                 break;
