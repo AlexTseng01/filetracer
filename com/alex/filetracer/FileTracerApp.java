@@ -12,8 +12,8 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class FileTracerApp {
-    public static void main(String[] args) {
-        long startTime = System.nanoTime();
+    public void runScan(Path origin, ScanListener listener) {
+    	long startTime = System.nanoTime();
 
         int producerCount = 8;
         int consumerCount = 4;
@@ -23,10 +23,10 @@ public class FileTracerApp {
         BlockingQueue<Path> fileQueue = new ArrayBlockingQueue<>(10000);
 
         AtomicInteger activeScanners = new AtomicInteger(0);
+        AtomicInteger filesProcessed = new AtomicInteger(0);
 
         IndexDatabase db = new IndexDatabase();
 
-        Path origin = Paths.get("C:\\Users\\alext\\OneDrive\\Documents");
         dirQueue.add(origin);
 
         // Create producer threads
@@ -52,6 +52,12 @@ public class FileTracerApp {
                         }
 
                         db.insert(file);
+                        
+                        int count = filesProcessed.incrementAndGet();
+                        
+                        if (listener != null) {
+                        	listener.onProgress(count);
+                        }
                     }
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
@@ -80,7 +86,6 @@ public class FileTracerApp {
 
         for (int i = 0; i < producerCount; i++) {
             try {
-                // dirQueue.put(Paths.get("__DONE__"));
                 dirQueue.put(POISON);
             } catch (InterruptedException e) {
                 
@@ -97,7 +102,6 @@ public class FileTracerApp {
 
         for (int i = 0; i < consumerCount; i++) {
             try {
-                // fileQueue.put(Paths.get("__DONE__"));
                 fileQueue.put(POISON);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -115,6 +119,12 @@ public class FileTracerApp {
         // Print duration
         long endTime = System.nanoTime();
         double seconds = (endTime - startTime) / 1_000_000_000.0;
+        
+        if (listener != null) {
+        	listener.onComplete(seconds);
+        }
+        
         System.out.printf("Execution time: %.3f seconds%n", seconds);
     }
+    
 }

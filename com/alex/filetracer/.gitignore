@@ -4,3 +4,6 @@
 /FileScanner.class
 /FileTracerApp.class
 /IndexDatabase.class
+/FileTracerApp$ScanListener.class
+/ScanListener.class
+/MainFrame$2.class

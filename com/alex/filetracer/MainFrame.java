@@ -9,9 +9,13 @@ import java.awt.GridLayout;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 import javax.swing.JScrollPane;
 import javax.swing.JProgressBar;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.JMenuBar;
 import javax.swing.JMenu;
@@ -32,6 +36,9 @@ public class MainFrame extends JFrame {
 	private JTextField directoryField;
 	private JTextField searchField;
 	private JTable table;
+	private final FileTracerApp tracerApp;
+	private double time = 0;
+	private int entries = 0;
 
 	/**
 	 * Launch the application.
@@ -41,7 +48,8 @@ public class MainFrame extends JFrame {
 			public void run() {
 				try {
 					UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-					MainFrame frame = new MainFrame();
+					FileTracerApp app = new FileTracerApp();
+					MainFrame frame = new MainFrame(app);
 					frame.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -53,7 +61,9 @@ public class MainFrame extends JFrame {
 	/**
 	 * Create the frame.
 	 */
-	public MainFrame() {
+	public MainFrame(FileTracerApp app) {
+		this.tracerApp = app;
+		
 		setResizable(false);
 		setTitle("MainFrame");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -91,6 +101,27 @@ public class MainFrame extends JFrame {
 		JButton scanButton = new JButton("Scan");
 		scanButton.setBounds(10, 11, 89, 23);
 		toolPanel.add(scanButton);
+		scanButton.addActionListener(e -> {
+		    Path origin = Paths.get(directoryField.getText().trim());
+
+		    new Thread(() -> {
+		        tracerApp.runScan(origin, new ScanListener() {
+		            @Override
+		            public void onProgress(int count) {
+		                SwingUtilities.invokeLater(() -> {
+		                	entries = count;
+		                });
+		            }
+
+		            @Override
+		            public void onComplete(double seconds) {
+		                SwingUtilities.invokeLater(() -> {
+		                	time = seconds;
+		                });
+		            }
+		        });
+		    }).start();
+		});
 		
 		JButton cleanButton = new JButton("Clean");
 		cleanButton.setBounds(109, 11, 89, 23);
