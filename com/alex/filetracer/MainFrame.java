@@ -99,9 +99,11 @@ public class MainFrame extends JFrame {
 		JScrollPane scrollPane = new JScrollPane();
 		resultsPanel.add(scrollPane);
 		
+		// A table apparently
 		table = new JTable();
 		scrollPane.setViewportView(table);
 		
+		// Handle progress bar
 		JPanel progressPanel = new JPanel();
 		progressPanel.setBounds(10, 590, 698, 24);
 		contentPane.add(progressPanel);
@@ -111,11 +113,13 @@ public class MainFrame extends JFrame {
 		progressBar.setForeground(Color.GREEN);
 		progressPanel.add(progressBar);
 		
+		// Tool panel
 		JPanel toolPanel = new JPanel();
 		toolPanel.setBounds(10, 11, 698, 79);
 		contentPane.add(toolPanel);
 		toolPanel.setLayout(null);
 		
+		// Handle scanning
 		JButton scanButton = new JButton("Scan");
 		scanButton.setBounds(10, 11, 89, 23);
 		toolPanel.add(scanButton);
@@ -143,45 +147,76 @@ public class MainFrame extends JFrame {
 		                	throughputLabel.setText("Throughput: " + (int)(entries / time) + " files/sec");
 		                	progressBar.setString("Done");
 		                	progressBar.setValue(progressBar.getMaximum());
+		                	progressBar.setValue(0);
+		                    progressBar.setStringPainted(false);
 		                });
 		            }
 		        });
 		    }).start();
 		});
 		
+		// Handle cleaning database
 		JButton cleanButton = new JButton("Clean");
 		cleanButton.setBounds(109, 11, 89, 23);
 		toolPanel.add(cleanButton);
 		
 		cleanButton.addActionListener(e -> {
-			try (Connection connection = DriverManager.getConnection(DB_URL); Statement stmt = connection.createStatement()) {
-				connection.setAutoCommit(true);
-				stmt.execute("PRAGMA foreign_keys = OFF");
-				ResultSet rs = stmt.executeQuery("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'");
-				List<String> tables = new ArrayList<>();
-				while (rs.next()) {
-					tables.add(rs.getString(1));
+			new Thread(() -> {
+				try (Connection connection = DriverManager.getConnection(DB_URL); Statement stmt = connection.createStatement()) {
+					connection.setAutoCommit(true);
+					stmt.execute("PRAGMA foreign_keys = OFF");
+					ResultSet rs = stmt.executeQuery("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'");
+					List<String> tables = new ArrayList<>();
+					while (rs.next()) {
+						tables.add(rs.getString(1));
+					}
+					rs.close();
+					
+					int total = tables.size();
+					
+					SwingUtilities.invokeLater(() -> {
+		                progressBar.setMinimum(0);
+		                progressBar.setMaximum(total);
+		                progressBar.setValue(0);
+		                progressBar.setStringPainted(true);
+		            });
+					
+					int i = 0;
+					for (String table : tables) {
+						stmt.executeUpdate("DELETE FROM \"" + table + "\"");
+						int progress = ++i;
+						
+						SwingUtilities.invokeLater(() -> {
+		                    progressBar.setValue(progress);
+		                    progressBar.setString("Cleaning... " + progress + "/" + total);
+		                });
+						
+						try {
+							Thread.sleep(50);
+						} catch(InterruptedException ignored) {
+							
+						}
+					}
+					
+					stmt.execute("PRAGMA foreign_keys = ON");
+					
+					SwingUtilities.invokeLater(() -> {
+						progressBar.setValue(total);
+	                	time = 0;
+	                	entries = 0;
+	                	countEntriesLabel.setText("Entries count: " + entries);
+	                	scanTimeLabel.setText("Scan time: " + String.format("%.3f", time));
+	                	throughputLabel.setText("Throughput: " + (int)(entries / time) + " files/s");
+	                	progressBar.setValue(0);
+	                    progressBar.setStringPainted(false);
+	                });
+				} catch (Exception ex) {
+					ex.printStackTrace();
 				}
-				rs.close();
-				
-				for (String table : tables) {
-					stmt.executeUpdate("DELETE FROM \"" + table + "\"");
-				}
-				
-				stmt.execute("PRAGMA foreign_keys = ON");
-				
-				SwingUtilities.invokeLater(() -> {
-                	time = 0;
-                	entries = 0;
-                	countEntriesLabel.setText("Entries count: " + entries);
-                	scanTimeLabel.setText("Scan time: " + String.format("%.3f", time));
-                	throughputLabel.setText("Throughput: " + (int)(entries / time) + " files/s");
-                });
-			} catch (Exception ex) {
-				ex.printStackTrace();
-			}
+			}).start();
 		});
 		
+		// Handle directory input
 		JLabel directoryLabel = new JLabel("Directory:");
 		directoryLabel.setBounds(208, 17, 58, 14);
 		toolPanel.add(directoryLabel);
@@ -196,6 +231,7 @@ public class MainFrame extends JFrame {
 		    System.out.println("Directory set to: " + dir);
 		});
 		
+		// Handle search input
 		JLabel searchLabel = new JLabel("Search:");
 		searchLabel.setBounds(208, 51, 58, 14);
 		toolPanel.add(searchLabel);
@@ -205,6 +241,7 @@ public class MainFrame extends JFrame {
 		toolPanel.add(searchField);
 		searchField.setColumns(10);
 		
+		// Handle sorting
 		JComboBox sortComboBox = new JComboBox();
 		sortComboBox.setModel(new DefaultComboBoxModel(new String[] {"Alphabetical (A-Z)", "Alphabetical (Z-A)", "Recently modified", "Oldest modified"}));
 		sortComboBox.setBounds(544, 8, 144, 22);
@@ -214,6 +251,7 @@ public class MainFrame extends JFrame {
 		sortLabel.setBounds(472, 14, 62, 14);
 		toolPanel.add(sortLabel);
 		
+		// Handle exporting
 		JButton exportButton = new JButton("Export");
 		exportButton.setBounds(109, 44, 89, 23);
 		toolPanel.add(exportButton);
@@ -222,6 +260,7 @@ public class MainFrame extends JFrame {
 		stopButton.setBounds(10, 45, 89, 23);
 		toolPanel.add(stopButton);
 		
+		// Handle filtering
 		JLabel filterLabel = new JLabel("Filter by:");
 		filterLabel.setBounds(472, 47, 62, 14);
 		toolPanel.add(filterLabel);
@@ -231,23 +270,28 @@ public class MainFrame extends JFrame {
 		filterComboBox.setBounds(544, 43, 144, 22);
 		toolPanel.add(filterComboBox);
 		
+		// Information panel
 		JPanel infoPanel = new JPanel();
 		infoPanel.setBounds(10, 101, 698, 24);
 		contentPane.add(infoPanel);
 		infoPanel.setLayout(null);
 		
+		// Count entries
 		countEntriesLabel = new JLabel("Entries count:");
 		countEntriesLabel.setBounds(10, 0, 128, 24);
 		infoPanel.add(countEntriesLabel);
 		
+		// Scan time
 		scanTimeLabel = new JLabel("Scan time:");
 		scanTimeLabel.setBounds(148, 5, 128, 14);
 		infoPanel.add(scanTimeLabel);
 		
+		// Throughput
 		throughputLabel = new JLabel("Throughput:");
 		throughputLabel.setBounds(286, 0, 500, 24);
 		infoPanel.add(throughputLabel);
 		
+		// Others
 		toolPanel.setBorder(BorderFactory.createDashedBorder(Color.GRAY));
 
 	}
