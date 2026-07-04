@@ -1,6 +1,7 @@
 /*
 Consumer class
 */
+package com.alex.filetracer;
 
 import java.nio.file.Path;
 import java.util.concurrent.BlockingQueue;

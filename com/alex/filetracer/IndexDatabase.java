@@ -1,6 +1,7 @@
 /*
 Database class
 */
+package com.alex.filetracer;
 
 import java.util.List;
 import java.util.ArrayList;
