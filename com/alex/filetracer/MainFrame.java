@@ -36,9 +36,15 @@ public class MainFrame extends JFrame {
 	private JTextField directoryField;
 	private JTextField searchField;
 	private JTable table;
+	
 	private final FileTracerApp tracerApp;
+	
 	private double time = 0;
 	private int entries = 0;
+	
+	private JLabel countEntriesLabel;
+	private JLabel scanTimeLabel;
+	private JLabel throughputLabel;
 
 	/**
 	 * Launch the application.
@@ -117,6 +123,9 @@ public class MainFrame extends JFrame {
 		            public void onComplete(double seconds) {
 		                SwingUtilities.invokeLater(() -> {
 		                	time = seconds;
+		                	countEntriesLabel.setText("Entries count: " + entries);
+		                	scanTimeLabel.setText("Scan time: " + String.format("%.3f", time));
+		                	throughputLabel.setText("Throughput: " + (int)(entries / time) + " files/sec");
 		                });
 		            }
 		        });
@@ -176,15 +185,15 @@ public class MainFrame extends JFrame {
 		contentPane.add(infoPanel);
 		infoPanel.setLayout(null);
 		
-		JLabel countEntriesLabel = new JLabel("Entries count:");
+		countEntriesLabel = new JLabel("Entries count:");
 		countEntriesLabel.setBounds(10, 0, 128, 24);
 		infoPanel.add(countEntriesLabel);
 		
-		JLabel scanTimeLabel = new JLabel("Scan time:");
+		scanTimeLabel = new JLabel("Scan time:");
 		scanTimeLabel.setBounds(148, 5, 128, 14);
 		infoPanel.add(scanTimeLabel);
 		
-		JLabel throughputLabel = new JLabel("Throughput:");
+		throughputLabel = new JLabel("Throughput:");
 		throughputLabel.setBounds(286, 0, 128, 24);
 		infoPanel.add(throughputLabel);
 		

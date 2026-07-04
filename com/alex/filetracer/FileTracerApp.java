@@ -124,7 +124,7 @@ public class FileTracerApp {
         	listener.onComplete(seconds);
         }
         
-        System.out.printf("Execution time: %.3f seconds%n", seconds);
+//        System.out.printf("Execution time: %.3f seconds%n", seconds);
     }
     
 }
