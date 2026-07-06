@@ -12,35 +12,42 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class FileTracerApp {
+	private int producerCount;
+	private int consumerCount;
+	private BlockingQueue<Path> dirQueue;
+	private BlockingQueue<Path> fileQueue;
+	List<Thread> producers;
+	List<Thread> consumers;
+	
+	private final Path POISON = Path.of("__DONE__");
+	
+	public FileTracerApp(int producerCount, int consumerCount, BlockingQueue<Path> dirQueue, BlockingQueue<Path> fileQueue, List<Thread> producers, List<Thread> consumers) {
+		this.producerCount = producerCount;
+		this.consumerCount = consumerCount;
+		this.dirQueue = dirQueue;
+		this.fileQueue = fileQueue;
+		this.producers = producers;
+		this.consumers = consumers;
+	}
+	
     public void runScan(Path origin, ScanListener listener) {
     	long startTime = System.nanoTime();
 
-        int producerCount = 8;
-        int consumerCount = 4;
-        final Path POISON = Path.of("__DONE__");
-
-        BlockingQueue<Path> dirQueue = new ArrayBlockingQueue<>(10000);
-        BlockingQueue<Path> fileQueue = new ArrayBlockingQueue<>(10000);
-
         AtomicInteger activeScanners = new AtomicInteger(0);
         AtomicInteger filesProcessed = new AtomicInteger(0);
-
+        
         IndexDatabase db = new IndexDatabase();
 
         dirQueue.add(origin);
 
         // Create producer threads
-        List<Thread> producers = new ArrayList<>();
-
         for (int i = 0; i < producerCount; i++) {
             Thread t = new Thread(new FileScanner(dirQueue, fileQueue, activeScanners, POISON));
             producers.add(t);
             t.start();
         }
 
-        // Create consumer threads
-        List<Thread> consumers = new ArrayList<>();
-        
+        // Create consumer threads        
         for (int i = 0; i < consumerCount; i++) {
             Thread t = new Thread(() -> {
                 try {
@@ -122,7 +129,24 @@ public class FileTracerApp {
         	listener.onComplete(seconds);
         }
         
-//        System.out.printf("Execution time: %.3f seconds%n", seconds);
+    }
+    
+    public void stopScan() {
+    	for (Thread t : producers) {
+    		t.interrupt();
+    	}
+    	
+    	for (Thread t : consumers) {
+    		t.interrupt();
+    	}
+    	
+    	dirQueue.clear();
+    	fileQueue.clear();
+    	
+    	dirQueue.offer(POISON);
+    	fileQueue.offer(POISON);
+    	
+    	System.out.println("Stopped");
     }
     
 }

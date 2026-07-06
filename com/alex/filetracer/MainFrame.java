@@ -19,6 +19,8 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
 import javax.swing.JScrollPane;
 import javax.swing.JProgressBar;
@@ -66,7 +68,15 @@ public class MainFrame extends JFrame {
 			public void run() {
 				try {
 					UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-					FileTracerApp app = new FileTracerApp();
+					
+					int producerCount = 8;
+					int consumerCount = 4;
+					BlockingQueue<Path> dirQueue = new ArrayBlockingQueue<>(10000);
+			        BlockingQueue<Path> fileQueue = new ArrayBlockingQueue<>(10000);
+			        List<Thread> producers = new ArrayList<>();
+			        List<Thread> consumers = new ArrayList<>();
+			        
+					FileTracerApp app = new FileTracerApp(producerCount, consumerCount, dirQueue, fileQueue, producers, consumers);
 					MainFrame frame = new MainFrame(app);
 					frame.setVisible(true);
 				} catch (Exception e) {
@@ -125,6 +135,10 @@ public class MainFrame extends JFrame {
 		toolPanel.add(scanButton);
 		
 		scanButton.addActionListener(e -> {
+			countEntriesLabel.setText("Entries count: 0");
+        	scanTimeLabel.setText("Scan time: 0.000");
+        	throughputLabel.setText("Throughput: 0 files/s");
+        	
 		    Path origin = Paths.get(dir);
 
 		    new Thread(() -> {
@@ -142,9 +156,11 @@ public class MainFrame extends JFrame {
 		            public void onComplete(double seconds) {
 		                SwingUtilities.invokeLater(() -> {
 		                	time = seconds;
+		                	
 		                	countEntriesLabel.setText("Entries count: " + entries);
 		                	scanTimeLabel.setText("Scan time: " + String.format("%.3f", time));
 		                	throughputLabel.setText("Throughput: " + (int)(entries / time) + " files/sec");
+		                	
 		                	progressBar.setString("Done");
 		                	progressBar.setValue(progressBar.getMaximum());
 		                	progressBar.setValue(0);
@@ -204,9 +220,11 @@ public class MainFrame extends JFrame {
 						progressBar.setValue(total);
 	                	time = 0;
 	                	entries = 0;
+	                	
 	                	countEntriesLabel.setText("Entries count: " + entries);
 	                	scanTimeLabel.setText("Scan time: " + String.format("%.3f", time));
 	                	throughputLabel.setText("Throughput: " + (int)(entries / time) + " files/s");
+	                	
 	                	progressBar.setValue(0);
 	                    progressBar.setStringPainted(false);
 	                });
@@ -252,13 +270,18 @@ public class MainFrame extends JFrame {
 		toolPanel.add(sortLabel);
 		
 		// Handle exporting
-		JButton exportButton = new JButton("Export");
-		exportButton.setBounds(109, 44, 89, 23);
-		toolPanel.add(exportButton);
+		JButton pauseButton = new JButton("Pause");
+		pauseButton.setBounds(109, 44, 89, 23);
+		toolPanel.add(pauseButton);
 		
+		// Stop threads
 		JButton stopButton = new JButton("Stop");
 		stopButton.setBounds(10, 45, 89, 23);
 		toolPanel.add(stopButton);
+		
+		stopButton.addActionListener(e -> {
+		    tracerApp.stopScan();
+		});
 		
 		// Handle filtering
 		JLabel filterLabel = new JLabel("Filter by:");
@@ -277,17 +300,17 @@ public class MainFrame extends JFrame {
 		infoPanel.setLayout(null);
 		
 		// Count entries
-		countEntriesLabel = new JLabel("Entries count:");
+		countEntriesLabel = new JLabel("Entries count: 0");
 		countEntriesLabel.setBounds(10, 0, 128, 24);
 		infoPanel.add(countEntriesLabel);
 		
 		// Scan time
-		scanTimeLabel = new JLabel("Scan time:");
+		scanTimeLabel = new JLabel("Scan time: 0.000");
 		scanTimeLabel.setBounds(148, 5, 128, 14);
 		infoPanel.add(scanTimeLabel);
 		
 		// Throughput
-		throughputLabel = new JLabel("Throughput:");
+		throughputLabel = new JLabel("Throughput: 0 files/s");
 		throughputLabel.setBounds(286, 0, 500, 24);
 		infoPanel.add(throughputLabel);
 		

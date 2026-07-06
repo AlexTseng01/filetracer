@@ -36,6 +36,7 @@ public class FileScanner implements Runnable {
 
                 try {
                     scan(dir);
+//                    System.out.println(dir);
                 } finally {
                     activeScanners.decrementAndGet();
                 }
