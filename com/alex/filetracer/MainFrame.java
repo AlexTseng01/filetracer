@@ -59,6 +59,7 @@ public class MainFrame extends JFrame {
 	private JProgressBar progressBar;
 	
     private static final String DB_URL = "jdbc:sqlite:file_index.db";
+    static IndexDatabase db = new IndexDatabase();
     
 	/**
 	 * Launch the application.
@@ -76,7 +77,7 @@ public class MainFrame extends JFrame {
 			        List<Thread> producers = new ArrayList<>();
 			        List<Thread> consumers = new ArrayList<>();
 			        
-					FileTracerApp app = new FileTracerApp(producerCount, consumerCount, dirQueue, fileQueue, producers, consumers);
+					FileTracerApp app = new FileTracerApp(producerCount, consumerCount, dirQueue, fileQueue, producers, consumers, db);
 					MainFrame frame = new MainFrame(app);
 					frame.setVisible(true);
 				} catch (Exception e) {
@@ -157,7 +158,7 @@ public class MainFrame extends JFrame {
 		                SwingUtilities.invokeLater(() -> {
 		                	time = seconds;
 		                	
-		                	countEntriesLabel.setText("Entries count: " + entries);
+		                	countEntriesLabel.setText("Entries count: " + db.showCount());
 		                	scanTimeLabel.setText("Scan time: " + String.format("%.3f", time));
 		                	throughputLabel.setText("Throughput: " + (int)(entries / time) + " files/sec");
 		                	

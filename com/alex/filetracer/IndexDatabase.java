@@ -64,4 +64,21 @@ public class IndexDatabase {
 
         return result;
     }
+    
+    public int showCount() {
+        String sql = "SELECT COUNT(*) FROM files";
+
+        try (Statement stmt = connection.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return 0;
+    }
 }
