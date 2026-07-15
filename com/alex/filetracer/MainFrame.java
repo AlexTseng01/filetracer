@@ -184,6 +184,7 @@ public class MainFrame extends JFrame {
 		toolPanel.add(cleanButton);
 		
 		cleanButton.addActionListener(e -> {
+			tracerApp.stopScan(); // Stop scanning first
 			new Thread(() -> {
 				try (Connection connection = DriverManager.getConnection(DB_URL); Statement stmt = connection.createStatement()) {
 					connection.setAutoCommit(true);
