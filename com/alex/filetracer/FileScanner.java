@@ -6,6 +6,8 @@ package com.alex.filetracer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.nio.file.AccessDeniedException;
 
@@ -14,19 +16,22 @@ public class FileScanner implements Runnable {
     private final BlockingQueue<Path> fileQueue; // Consumed by consumers
     private final AtomicInteger activeScanners;
     private final Path POISON;
+    private AtomicBoolean alive;
     
-    public FileScanner(BlockingQueue<Path> dirQueue, BlockingQueue<Path> fileQueue, AtomicInteger activeScanners, Path POISON) {
+    public FileScanner(BlockingQueue<Path> dirQueue, BlockingQueue<Path> fileQueue, AtomicInteger activeScanners, Path POISON, AtomicBoolean alive) {
         this.dirQueue = dirQueue;
         this.fileQueue = fileQueue;
         this.activeScanners = activeScanners;
         this.POISON = POISON;
+        this.alive = alive;
     }
 
     @Override
     public void run() {
-        while (true) {
+        while (alive.get()) {
             try {
                 Path dir = dirQueue.take();
+                System.out.println("Dequeued: " + dir);
 
                 if (dir.equals(POISON)) {
                     break;
@@ -47,18 +52,34 @@ public class FileScanner implements Runnable {
                 e.printStackTrace();
             }
         }
+        
+        System.out.println("Thread exiting");
     }
 
     private void scan(Path dir) throws Exception {
         try (var stream = Files.list(dir)) {
             stream.forEach(path -> {
+            	if (!alive.get()) {
+            		return;
+            	}
+            	
                 try {
-                    // Consumers will consume this
-                    fileQueue.put(path);
+                	while (alive.get()) {
+                	    if (fileQueue.offer(path, 100, TimeUnit.MILLISECONDS)) {
+                	        break;
+                	    }
+                	}
+                    
+                    if (!alive.get()) {
+                		return;
+                	}
 
                     if (Files.isDirectory(path)) {
-                        // Producers will consume this
-                        dirQueue.put(path);
+                    	while (alive.get()) {
+                    	    if (dirQueue.offer(path, 100, TimeUnit.MILLISECONDS)) {
+                    	        break;
+                    	    }
+                    	}
                     }
                 } catch (Exception ignored) {
 

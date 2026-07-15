@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.JScrollPane;
 import javax.swing.JProgressBar;
@@ -70,15 +71,20 @@ public class MainFrame extends JFrame {
 				try {
 					UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 					
+					// Settings
 					int producerCount = 8;
 					int consumerCount = 4;
+					
+					// Setup
 					BlockingQueue<Path> dirQueue = new ArrayBlockingQueue<>(10000);
 			        BlockingQueue<Path> fileQueue = new ArrayBlockingQueue<>(10000);
+			        
 			        List<Thread> producers = new ArrayList<>();
 			        List<Thread> consumers = new ArrayList<>();
 			        
 					FileTracerApp app = new FileTracerApp(producerCount, consumerCount, dirQueue, fileQueue, producers, consumers, db);
 					MainFrame frame = new MainFrame(app);
+					
 					frame.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -138,7 +144,7 @@ public class MainFrame extends JFrame {
 		scanButton.addActionListener(e -> {
 			countEntriesLabel.setText("Entries count: 0");
         	scanTimeLabel.setText("Scan time: 0.000");
-        	throughputLabel.setText("Throughput: 0 files/s");
+        	throughputLabel.setText("Throughput: 0 files/sec");
         	
 		    Path origin = Paths.get(dir);
 
@@ -224,7 +230,7 @@ public class MainFrame extends JFrame {
 	                	
 	                	countEntriesLabel.setText("Entries count: " + entries);
 	                	scanTimeLabel.setText("Scan time: " + String.format("%.3f", time));
-	                	throughputLabel.setText("Throughput: " + (int)(entries / time) + " files/s");
+	                	throughputLabel.setText("Throughput: " + (int)(entries / time) + " files/sec");
 	                	
 	                	progressBar.setValue(0);
 	                    progressBar.setStringPainted(false);
@@ -270,7 +276,7 @@ public class MainFrame extends JFrame {
 		sortLabel.setBounds(472, 14, 62, 14);
 		toolPanel.add(sortLabel);
 		
-		// Handle exporting
+		// Handle pausing
 		JButton pauseButton = new JButton("Pause");
 		pauseButton.setBounds(109, 44, 89, 23);
 		toolPanel.add(pauseButton);
@@ -311,7 +317,7 @@ public class MainFrame extends JFrame {
 		infoPanel.add(scanTimeLabel);
 		
 		// Throughput
-		throughputLabel = new JLabel("Throughput: 0 files/s");
+		throughputLabel = new JLabel("Throughput: 0 files/sec");
 		throughputLabel.setBounds(286, 0, 500, 24);
 		infoPanel.add(throughputLabel);
 		

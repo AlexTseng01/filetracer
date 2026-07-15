@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class FileTracerApp {
@@ -25,6 +26,8 @@ public class FileTracerApp {
 	
 	private final Path POISON = Path.of("__DONE__");
 	
+	AtomicBoolean alive = new AtomicBoolean(true);
+	
 	public FileTracerApp(int producerCount, int consumerCount, BlockingQueue<Path> dirQueue, BlockingQueue<Path> fileQueue, List<Thread> producers, List<Thread> consumers, IndexDatabase db) {
 		this.producerCount = producerCount;
 		this.consumerCount = consumerCount;
@@ -40,12 +43,12 @@ public class FileTracerApp {
 
         AtomicInteger activeScanners = new AtomicInteger(0);
         AtomicInteger filesProcessed = new AtomicInteger(0);
-
+        
         dirQueue.add(origin);
 
         // Create producer threads
         for (int i = 0; i < producerCount; i++) {
-            Thread t = new Thread(new FileScanner(dirQueue, fileQueue, activeScanners, POISON));
+            Thread t = new Thread(new FileScanner(dirQueue, fileQueue, activeScanners, POISON, alive));
             producers.add(t);
             t.start();
         }
@@ -63,11 +66,11 @@ public class FileTracerApp {
 
                         db.insert(file);
                         
-//                        int count = filesProcessed.incrementAndGet();
+                        int count = filesProcessed.incrementAndGet();
                         
-//                        if (listener != null) {
-//                        	listener.onProgress(count);
-//                        }
+                        if (listener != null) {
+                        	listener.onProgress(count);
+                        }
                     }
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
@@ -134,9 +137,13 @@ public class FileTracerApp {
         	listener.onComplete(seconds);
         }
         
+        alive.set(true);
+        
     }
     
     public void stopScan() {
+    	alive.set(false);
+    	
     	for (Thread t : producers) {
     		t.interrupt();
     	}
@@ -145,11 +152,11 @@ public class FileTracerApp {
     		t.interrupt();
     	}
     	
+    	producers.clear();
+    	consumers.clear();
+    	
     	dirQueue.clear();
     	fileQueue.clear();
-    	
-    	dirQueue.offer(POISON);
-    	fileQueue.offer(POISON);
     	
     	System.out.println("Stopped");
     }
