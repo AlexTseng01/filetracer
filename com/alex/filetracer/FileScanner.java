@@ -1,6 +1,3 @@
-/*
-Producer class
-*/
 package com.alex.filetracer;
 
 import java.nio.file.Files;
@@ -12,8 +9,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.nio.file.AccessDeniedException;
 
 public class FileScanner implements Runnable {
-    private final BlockingQueue<Path> dirQueue; // All producer threads share
-    private final BlockingQueue<Path> fileQueue; // Consumed by consumers
+    private final BlockingQueue<Path> dirQueue;
+    private final BlockingQueue<Path> fileQueue;
     private final AtomicInteger activeScanners;
     private final Path POISON;
     private AtomicBoolean alive;
@@ -31,7 +28,7 @@ public class FileScanner implements Runnable {
         while (alive.get()) {
             try {
                 Path dir = dirQueue.take();
-                System.out.println("Dequeued: " + dir);
+                System.out.println("dirQueue: " + dirQueue.size() + "/" + dirQueue.remainingCapacity());
 
                 if (dir.equals(POISON)) {
                     break;

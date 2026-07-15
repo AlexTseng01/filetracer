@@ -1,7 +1,6 @@
 package com.alex.filetracer;
 
 import java.awt.EventQueue;
-
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
@@ -22,7 +21,6 @@ import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 import javax.swing.JScrollPane;
 import javax.swing.JProgressBar;
 import javax.swing.SwingConstants;
@@ -47,24 +45,18 @@ public class MainFrame extends JFrame {
 	private JTextField directoryField;
 	private JTextField searchField;
 	private JTable table;
-	
 	private final FileTracerApp tracerApp;
-	
-	private double time = 0;
-	private int entries = 0;
-	private String dir = "";
-	
 	private JLabel countEntriesLabel;
 	private JLabel scanTimeLabel;
 	private JLabel throughputLabel;
 	private JProgressBar progressBar;
 	
+	private double time = 0;
+	private int entries = 0;
+	private String dir = "";
     private static final String DB_URL = "jdbc:sqlite:file_index.db";
     static IndexDatabase db = new IndexDatabase();
     
-	/**
-	 * Launch the application.
-	 */
 	public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
@@ -76,13 +68,14 @@ public class MainFrame extends JFrame {
 					int consumerCount = 4;
 					
 					// Setup
-					BlockingQueue<Path> dirQueue = new ArrayBlockingQueue<>(10000);
-			        BlockingQueue<Path> fileQueue = new ArrayBlockingQueue<>(10000);
+					BlockingQueue<Path> dirQueue = new ArrayBlockingQueue<>(100000);
+			        BlockingQueue<Path> fileQueue = new ArrayBlockingQueue<>(100000);
 			        
 			        List<Thread> producers = new ArrayList<>();
 			        List<Thread> consumers = new ArrayList<>();
 			        
 					FileTracerApp app = new FileTracerApp(producerCount, consumerCount, dirQueue, fileQueue, producers, consumers, db);
+					
 					MainFrame frame = new MainFrame(app);
 					
 					frame.setVisible(true);
@@ -93,9 +86,6 @@ public class MainFrame extends JFrame {
 		});
 	}
 
-	/**
-	 * Create the frame.
-	 */
 	public MainFrame(FileTracerApp app) {
 		this.tracerApp = app;
 		
@@ -126,6 +116,7 @@ public class MainFrame extends JFrame {
 		contentPane.add(progressPanel);
 		progressPanel.setLayout(new GridLayout(0, 1, 0, 0));
 		
+		// Progress bar
 		progressBar = new JProgressBar();
 		progressBar.setForeground(Color.GREEN);
 		progressPanel.add(progressBar);
@@ -140,7 +131,6 @@ public class MainFrame extends JFrame {
 		JButton scanButton = new JButton("Scan");
 		scanButton.setBounds(10, 11, 89, 23);
 		toolPanel.add(scanButton);
-		
 		scanButton.addActionListener(e -> {
 			countEntriesLabel.setText("Entries count: 0");
         	scanTimeLabel.setText("Scan time: 0.000");
@@ -182,7 +172,6 @@ public class MainFrame extends JFrame {
 		JButton cleanButton = new JButton("Clean");
 		cleanButton.setBounds(109, 11, 89, 23);
 		toolPanel.add(cleanButton);
-		
 		cleanButton.addActionListener(e -> {
 			tracerApp.stopScan(); // Stop scanning first
 			new Thread(() -> {
@@ -251,7 +240,6 @@ public class MainFrame extends JFrame {
 		directoryField.setBounds(276, 11, 186, 20);
 		toolPanel.add(directoryField);
 		directoryField.setColumns(10);
-		
 		directoryField.addActionListener(e -> {
 		    dir = directoryField.getText().trim();
 		    System.out.println("Directory set to: " + dir);
@@ -286,7 +274,6 @@ public class MainFrame extends JFrame {
 		JButton stopButton = new JButton("Stop");
 		stopButton.setBounds(10, 45, 89, 23);
 		toolPanel.add(stopButton);
-		
 		stopButton.addActionListener(e -> {
 		    tracerApp.stopScan();
 		});
@@ -324,6 +311,5 @@ public class MainFrame extends JFrame {
 		
 		// Others
 		toolPanel.setBorder(BorderFactory.createDashedBorder(Color.GRAY));
-
 	}
 }

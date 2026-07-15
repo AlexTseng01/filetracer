@@ -1,13 +1,7 @@
-/* 
-Main class
-*/
 package com.alex.filetracer;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -15,15 +9,26 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class FileTracerApp {
 	private int producerCount;
 	private int consumerCount;
+	
 	private BlockingQueue<Path> dirQueue;
 	private BlockingQueue<Path> fileQueue;
-	List<Thread> producers;
-	List<Thread> consumers;
-	IndexDatabase db;
-	private final Path POISON = Path.of("__DONE__");
-	AtomicBoolean alive = new AtomicBoolean(true);
 	
-	public FileTracerApp(int producerCount, int consumerCount, BlockingQueue<Path> dirQueue, BlockingQueue<Path> fileQueue, List<Thread> producers, List<Thread> consumers, IndexDatabase db) {
+	private List<Thread> producers;
+	private List<Thread> consumers;
+	
+	private IndexDatabase db;
+	
+	private final Path POISON = Path.of("__DONE__");
+	
+	private AtomicBoolean alive = new AtomicBoolean(true);
+	
+	public FileTracerApp(int producerCount, 
+			int consumerCount, 
+			BlockingQueue<Path> dirQueue, 
+			BlockingQueue<Path> fileQueue, 
+			List<Thread> producers, 
+			List<Thread> consumers, 
+			IndexDatabase db) {
 		this.producerCount = producerCount;
 		this.consumerCount = consumerCount;
 		this.dirQueue = dirQueue;
@@ -46,8 +51,6 @@ public class FileTracerApp {
         AtomicInteger activeScanners = new AtomicInteger(0);
         AtomicInteger filesProcessed = new AtomicInteger(0);
         
-        dirQueue.add(origin);
-
         // Create producer threads
         for (int i = 0; i < producerCount; i++) {
             Thread t = new Thread(new FileScanner(dirQueue, fileQueue, activeScanners, POISON, alive));
@@ -140,7 +143,6 @@ public class FileTracerApp {
         }
         
         alive.set(true);
-        
     }
     
     public void stopScan() {
@@ -159,8 +161,6 @@ public class FileTracerApp {
     	
     	dirQueue.clear();
     	fileQueue.clear();
-    	
-    	System.out.println("Stopped");
     }
     
     public void pauseScan() {
