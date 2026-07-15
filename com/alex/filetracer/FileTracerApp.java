@@ -15,17 +15,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class FileTracerApp {
 	private int producerCount;
 	private int consumerCount;
-	
 	private BlockingQueue<Path> dirQueue;
 	private BlockingQueue<Path> fileQueue;
-	
 	List<Thread> producers;
 	List<Thread> consumers;
-	
 	IndexDatabase db;
-	
 	private final Path POISON = Path.of("__DONE__");
-	
 	AtomicBoolean alive = new AtomicBoolean(true);
 	
 	public FileTracerApp(int producerCount, int consumerCount, BlockingQueue<Path> dirQueue, BlockingQueue<Path> fileQueue, List<Thread> producers, List<Thread> consumers, IndexDatabase db) {
@@ -39,6 +34,13 @@ public class FileTracerApp {
 	}
 	
     public void runScan(Path origin, ScanListener listener) {
+    	// Setup
+    	dirQueue.clear();
+    	fileQueue.clear();
+    	alive.set(true);
+    	dirQueue.add(origin);
+    	
+    	// Start
     	long startTime = System.nanoTime();
 
         AtomicInteger activeScanners = new AtomicInteger(0);
