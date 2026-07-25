@@ -47,7 +47,6 @@ public class FileTracerApp {
     	
     	// Start
     	long startTime = System.nanoTime();
-
         AtomicInteger activeScanners = new AtomicInteger(0);
         AtomicInteger filesProcessed = new AtomicInteger(0);
         
@@ -60,28 +59,7 @@ public class FileTracerApp {
 
         // Create consumer threads        
         for (int i = 0; i < consumerCount; i++) {
-            Thread t = new Thread(() -> {
-                try {
-                    while (true) {
-                        Path file = fileQueue.take();
-
-                        if (file.equals(POISON)) {
-                            break;
-                        }
-
-                        db.insert(file);
-                        
-                        int count = filesProcessed.incrementAndGet();
-                        
-                        if (listener != null) {
-                        	listener.onProgress(count);
-                        }
-                    }
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            });
-
+        	Thread t = new Thread(new FileIndexer(db, fileQueue, filesProcessed, listener, POISON));
             consumers.add(t);
             t.start();
         }
@@ -105,7 +83,7 @@ public class FileTracerApp {
             try {
                 dirQueue.put(POISON);
             } catch (InterruptedException e) {
-                
+                Thread.currentThread().interrupt();
             }
         }
 
@@ -125,15 +103,15 @@ public class FileTracerApp {
                 Thread.currentThread().interrupt();
             }
         }
-
+                
         for (Thread t : consumers) {
             try {
-                t.join();
+                t.join(); // bug
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
         }
-
+        
         // Log elapsed time
         long endTime = System.nanoTime();
         double seconds = (endTime - startTime) / 1_000_000_000.0;
@@ -143,6 +121,9 @@ public class FileTracerApp {
         }
         
         alive.set(true);
+        
+        producers.clear();
+        consumers.clear();
     }
     
     public void stopScan() {
@@ -156,15 +137,7 @@ public class FileTracerApp {
     		t.interrupt();
     	}
     	
-    	producers.clear();
-    	consumers.clear();
-    	
     	dirQueue.clear();
     	fileQueue.clear();
     }
-    
-    public void pauseScan() {
-    	
-    }
-    
 }

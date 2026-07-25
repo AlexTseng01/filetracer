@@ -28,7 +28,7 @@ public class FileScanner implements Runnable {
         while (alive.get()) {
             try {
                 Path dir = dirQueue.take();
-                System.out.println("dirQueue: " + dirQueue.size() + "/" + dirQueue.remainingCapacity());
+//                System.out.println("dirQueue: " + dirQueue.size() + "/" + dirQueue.remainingCapacity());
 
                 if (dir.equals(POISON)) {
                     break;
@@ -50,7 +50,7 @@ public class FileScanner implements Runnable {
             }
         }
         
-        System.out.println("Thread exiting");
+        System.out.println("Producer thread terminated");
     }
 
     private void scan(Path dir) throws Exception {
