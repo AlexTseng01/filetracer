@@ -27,18 +27,18 @@ public class FileScanner implements Runnable {
     public void run() {
         while (alive.get()) {
             try {
-                Path dir = dirQueue.take();
+                Path path = dirQueue.take();
 //                System.out.println("dirQueue: " + dirQueue.size() + "/" + dirQueue.remainingCapacity());
 
-                if (dir.equals(POISON)) {
+                if (path.equals(POISON)) {
                     break;
                 }
 
                 activeScanners.incrementAndGet();
 
                 try {
-                    scan(dir);
-                    System.out.println(dir);
+                    scan(path);
+                    System.out.println("Producers threads are processing: " + path);
                 } finally {
                     activeScanners.decrementAndGet();
                 }

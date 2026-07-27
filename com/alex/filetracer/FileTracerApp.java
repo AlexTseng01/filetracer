@@ -95,6 +95,8 @@ public class FileTracerApp {
             }
         }
         
+        System.out.printf("Remaining files after producers exited: %,d%n", fileQueue.size());
+        
         // Kill consumer threads
         for (int i = 0; i < consumerCount; i++) {
             try {
@@ -103,25 +105,28 @@ public class FileTracerApp {
                 Thread.currentThread().interrupt();
             }
         }
-                
+        
         for (Thread t : consumers) {
             try {
-                t.join(); // bug
+                t.join();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
         }
         
+        System.out.printf("Remaining files after consumers exited: %,d%n", fileQueue.size());
+        
         // Log elapsed time
         long endTime = System.nanoTime();
         double seconds = (endTime - startTime) / 1_000_000_000.0;
+        
+        System.out.println("Execution time: " + String.format("%.2f", seconds));
         
         if (listener != null) {
         	listener.onComplete(seconds);
         }
         
         alive.set(true);
-        
         producers.clear();
         consumers.clear();
     }

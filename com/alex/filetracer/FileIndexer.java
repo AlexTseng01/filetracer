@@ -28,8 +28,10 @@ public class FileIndexer implements Runnable {
             while (true) {
                 Path path = fileQueue.take();
                 
+                System.out.println("Consumer threads are processing: " + path);
+                
                 if (path.equals(POISON)) {
-//                	fileQueue.put(path);
+                	fileQueue.put(path);
                     break;
                 }
                 
@@ -42,7 +44,7 @@ public class FileIndexer implements Runnable {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+        	Thread.currentThread().interrupt();
         }
         
         System.out.println("Consumer thread terminated");
