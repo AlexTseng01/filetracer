@@ -36,6 +36,8 @@ import javax.swing.JTable;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.border.LineBorder;
+import javax.swing.table.DefaultTableModel;
+
 import java.awt.Color;
 
 public class MainFrame extends JFrame {
@@ -162,6 +164,8 @@ public class MainFrame extends JFrame {
 		                	progressBar.setValue(progressBar.getMaximum());
 		                	progressBar.setValue(0);
 		                    progressBar.setStringPainted(false);
+		                    
+		                    loadTable();
 		                });
 		            }
 		        });
@@ -311,5 +315,43 @@ public class MainFrame extends JFrame {
 		
 		// Others
 		toolPanel.setBorder(BorderFactory.createDashedBorder(Color.GRAY));
+	}
+	
+	private void loadTable() {
+		try {
+			String sql = "SELECT filename, filepath FROM files";
+			
+			Connection conn = DriverManager.getConnection(DB_URL);
+			
+			Statement stmt = conn.createStatement();
+			
+			ResultSet rs = stmt.executeQuery(sql);
+			
+			DefaultTableModel model = new DefaultTableModel();
+			
+			model.addColumn("#");
+			model.addColumn("Name");
+			model.addColumn("Path");
+			
+			int number = 1;
+			
+			while(rs.next()) {
+				model.addRow(new Object[] {number++, rs.getString("filename"), rs.getString("filepath")});
+			}
+			
+			table.setModel(model);
+			
+			// Adjust width of rows
+			table.getColumnModel().getColumn(0).setPreferredWidth(40);
+			table.getColumnModel().getColumn(1).setPreferredWidth(500);
+			table.getColumnModel().getColumn(2).setPreferredWidth(500);
+			
+			rs.close();
+			stmt.close();
+			conn.close();
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 }
