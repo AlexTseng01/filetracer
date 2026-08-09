@@ -40,7 +40,10 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableModel;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.FlowLayout;
+import javax.swing.JTextArea;
 
 public class MainFrame extends JFrame {
 
@@ -64,6 +67,8 @@ public class MainFrame extends JFrame {
 	private JLabel typeLabel;
 	
 	private JProgressBar progressBar;
+	
+	private JTextArea terminalTextArea;
 	
 	private double time = 0;
 	private String dir = "";
@@ -93,6 +98,10 @@ public class MainFrame extends JFrame {
 					
 					MainFrame frame = new MainFrame(app);
 					
+					app.setLogListener(message -> {
+					    frame.terminalPrint(message);
+					});
+					
 					frame.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -104,17 +113,17 @@ public class MainFrame extends JFrame {
 	public MainFrame(FileTracerApp app) {
 		this.tracerApp = app;
 		
-//		setResizable(false);
+		setResizable(false);
 		setTitle("FileTracer v0.0.1");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 734, 827);
+		setBounds(100, 100, 1369, 827);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
 		contentPane.setLayout(null);
 		
 		JPanel resultsPanel = new JPanel();
-		resultsPanel.setBounds(10, 136, 698, 443);
+		resultsPanel.setBounds(10, 136, 821, 443);
 		contentPane.add(resultsPanel);
 		resultsPanel.setLayout(new GridLayout(0, 1, 0, 0));
 		
@@ -153,17 +162,11 @@ public class MainFrame extends JFrame {
 		                java.nio.file.attribute.BasicFileAttributes.class
 		            );
 
-		            DateTimeFormatter formatter =
-		                    DateTimeFormatter.ofPattern("MMM d, yyyy h:mm a")
-		                                     .withZone(ZoneId.systemDefault());
+		            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM d, yyyy h:mm a").withZone(ZoneId.systemDefault());
 
-		            creationLabel.setText(
-		                    "Created: " + formatter.format(attributes.creationTime().toInstant())
-		            );
+		            creationLabel.setText("Created: " + formatter.format(attributes.creationTime().toInstant()));
 
-		            modifiedLabel.setText(
-		                    "Modified: " + formatter.format(attributes.lastModifiedTime().toInstant())
-		            );
+		            modifiedLabel.setText("Modified: " + formatter.format(attributes.lastModifiedTime().toInstant()));
 
 		            String name = path.getFileName().toString();
 		            
@@ -191,7 +194,7 @@ public class MainFrame extends JFrame {
 		
 		// Handle progress bar
 		JPanel progressPanel = new JPanel();
-		progressPanel.setBounds(10, 761, 698, 24);
+		progressPanel.setBounds(10, 761, 821, 24);
 		contentPane.add(progressPanel);
 		progressPanel.setLayout(new GridLayout(0, 1, 0, 0));
 		
@@ -202,7 +205,7 @@ public class MainFrame extends JFrame {
 		
 		// Tool panel
 		JPanel toolPanel = new JPanel();
-		toolPanel.setBounds(10, 11, 698, 79);
+		toolPanel.setBounds(10, 11, 821, 79);
 		contentPane.add(toolPanel);
 		toolPanel.setLayout(null);
 		
@@ -238,7 +241,6 @@ public class MainFrame extends JFrame {
 		                    progressBar.setStringPainted(false);
 		                    
 		                    loadTable();
-		                    
 		                    clearInfoPanel();
 		                });
 		            }
@@ -301,8 +303,8 @@ public class MainFrame extends JFrame {
 	                    progressBar.setStringPainted(false);
 	                    
 	                    loadTable();
-	                    
 	                    clearInfoPanel();
+	                    terminalClear();
 	                });
 				} catch (Exception ex) {
 					ex.printStackTrace();
@@ -312,11 +314,11 @@ public class MainFrame extends JFrame {
 		
 		// Handle directory input
 		JLabel directoryLabel = new JLabel("Directory:");
-		directoryLabel.setBounds(208, 17, 58, 14);
+		directoryLabel.setBounds(268, 17, 58, 14);
 		toolPanel.add(directoryLabel);
 		
 		directoryField = new JTextField();
-		directoryField.setBounds(276, 11, 186, 20);
+		directoryField.setBounds(336, 11, 186, 20);
 		toolPanel.add(directoryField);
 		directoryField.setColumns(10);
 		directoryField.addActionListener(e -> {
@@ -326,22 +328,22 @@ public class MainFrame extends JFrame {
 		
 		// Handle search input
 		JLabel searchLabel = new JLabel("Search:");
-		searchLabel.setBounds(208, 51, 58, 14);
+		searchLabel.setBounds(268, 51, 58, 14);
 		toolPanel.add(searchLabel);
 		
 		searchField = new JTextField();
-		searchField.setBounds(276, 45, 186, 20);
+		searchField.setBounds(336, 45, 186, 20);
 		toolPanel.add(searchField);
 		searchField.setColumns(10);
 		
 		// Handle sorting
 		JComboBox sortComboBox = new JComboBox();
 		sortComboBox.setModel(new DefaultComboBoxModel(new String[] {"Alphabetical (A-Z)", "Alphabetical (Z-A)", "Recently modified", "Oldest modified"}));
-		sortComboBox.setBounds(544, 8, 144, 22);
+		sortComboBox.setBounds(667, 8, 144, 22);
 		toolPanel.add(sortComboBox);
 		
 		JLabel sortLabel = new JLabel("Sort by:");
-		sortLabel.setBounds(472, 14, 62, 14);
+		sortLabel.setBounds(595, 14, 62, 14);
 		toolPanel.add(sortLabel);
 		
 		// Handle pausing
@@ -360,17 +362,17 @@ public class MainFrame extends JFrame {
 		
 		// Handle filtering
 		JLabel filterLabel = new JLabel("Filter by:");
-		filterLabel.setBounds(472, 47, 62, 14);
+		filterLabel.setBounds(595, 47, 62, 14);
 		toolPanel.add(filterLabel);
 		
 		JComboBox filterComboBox = new JComboBox();
 		filterComboBox.setModel(new DefaultComboBoxModel(new String[] {"All", "Folders", "Files"}));
-		filterComboBox.setBounds(544, 43, 144, 22);
+		filterComboBox.setBounds(667, 43, 144, 22);
 		toolPanel.add(filterComboBox);
 		
 		// Information panel
 		JPanel labelPanel = new JPanel();
-		labelPanel.setBounds(10, 101, 698, 24);
+		labelPanel.setBounds(10, 101, 821, 24);
 		contentPane.add(labelPanel);
 		labelPanel.setLayout(null);
 		
@@ -391,39 +393,53 @@ public class MainFrame extends JFrame {
 		
 		// Display basic information
 		JPanel infoPanel = new JPanel();
-		infoPanel.setBounds(10, 590, 698, 160);
+		infoPanel.setBounds(10, 590, 821, 160);
 		contentPane.add(infoPanel);
 		infoPanel.setLayout(null);
 		
 		// Display file name
 		nameLabel = new JLabel("Name:");
-		nameLabel.setBounds(10, 11, 678, 14);
+		nameLabel.setBounds(10, 11, 801, 14);
 		infoPanel.add(nameLabel);
 		
 		// Display full path
 		pathLabel = new JLabel("Path:");
-		pathLabel.setBounds(10, 36, 678, 14);
+		pathLabel.setBounds(10, 36, 801, 14);
 		infoPanel.add(pathLabel);
 		
 		// Display file size
 		sizeLabel = new JLabel("Size:");
-		sizeLabel.setBounds(10, 61, 678, 14);
+		sizeLabel.setBounds(10, 61, 801, 14);
 		infoPanel.add(sizeLabel);
 		
 		// Display creation date
 		creationLabel = new JLabel("Created:");
-		creationLabel.setBounds(10, 86, 678, 14);
+		creationLabel.setBounds(10, 86, 801, 14);
 		infoPanel.add(creationLabel);
 		
 		// Display modified date
 		modifiedLabel = new JLabel("Modified:");
-		modifiedLabel.setBounds(10, 111, 678, 14);
+		modifiedLabel.setBounds(10, 111, 801, 14);
 		infoPanel.add(modifiedLabel);
 		
 		// Display file type
 		typeLabel = new JLabel("Type:");
-		typeLabel.setBounds(10, 136, 678, 14);
+		typeLabel.setBounds(10, 136, 801, 14);
 		infoPanel.add(typeLabel);
+		
+		// Terminal
+		JPanel terminalPanel = new JPanel();
+		terminalPanel.setBounds(841, 11, 502, 774);
+		contentPane.add(terminalPanel);
+		terminalPanel.setLayout(new BorderLayout());
+		
+		JScrollPane terminalPane = new JScrollPane();
+		terminalPanel.add(terminalPane, BorderLayout.CENTER);
+		
+		terminalTextArea = new JTextArea();
+		terminalTextArea.setEditable(false);
+
+		terminalPane.setViewportView(terminalTextArea);
 		
 		// Cosmetics
 		toolPanel.setBorder(BorderFactory.createDashedBorder(Color.GRAY));
@@ -498,5 +514,17 @@ public class MainFrame extends JFrame {
 		modifiedLabel.setText("Modified:");
 		typeLabel.setText("Type:");
 	}
-
+	
+	public void terminalPrint(String msg) {
+		SwingUtilities.invokeLater(() -> {
+	        terminalTextArea.append(msg + "\n");
+	        terminalTextArea.setCaretPosition(
+	            terminalTextArea.getDocument().getLength()
+	        );
+	    });
+	}
+	
+	private void terminalClear() {
+		terminalTextArea.setText("");
+	}
 }

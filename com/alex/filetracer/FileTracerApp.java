@@ -22,6 +22,8 @@ public class FileTracerApp {
 	
 	private AtomicBoolean alive = new AtomicBoolean(true);
 	
+	private LogListener logListener;
+	
 	public FileTracerApp(int producerCount, 
 			int consumerCount, 
 			BlockingQueue<Path> dirQueue, 
@@ -52,14 +54,14 @@ public class FileTracerApp {
         
         // Create producer threads
         for (int i = 0; i < producerCount; i++) {
-            Thread t = new Thread(new FileScanner(dirQueue, fileQueue, activeScanners, POISON, alive));
+            Thread t = new Thread(new FileScanner(dirQueue, fileQueue, activeScanners, POISON, alive, logListener));
             producers.add(t);
             t.start();
         }
 
         // Create consumer threads        
         for (int i = 0; i < consumerCount; i++) {
-        	Thread t = new Thread(new FileIndexer(db, fileQueue, filesProcessed, listener, POISON));
+        	Thread t = new Thread(new FileIndexer(db, fileQueue, filesProcessed, listener, POISON, logListener));
             consumers.add(t);
             t.start();
         }
@@ -95,7 +97,7 @@ public class FileTracerApp {
             }
         }
         
-        System.out.printf("Remaining files after producers exited: %,d%n", fileQueue.size());
+//        log(String.format("Remaining files after producers exited: %,d", fileQueue.size()));
         
         // Kill consumer threads
         for (int i = 0; i < consumerCount; i++) {
@@ -114,13 +116,13 @@ public class FileTracerApp {
             }
         }
         
-        System.out.printf("Remaining files after consumers exited: %,d%n", fileQueue.size());
+//        log(String.format("Remaining files after consumers exited: %,d", fileQueue.size()));
         
         // Log elapsed time
         long endTime = System.nanoTime();
         double seconds = (endTime - startTime) / 1_000_000_000.0;
         
-        System.out.println("Execution time: " + String.format("%.2f", seconds));
+        log(String.format("Execution time: %.2f seconds", seconds));
         
         if (listener != null) {
         	listener.onComplete(seconds);
@@ -144,5 +146,15 @@ public class FileTracerApp {
     	
     	dirQueue.clear();
     	fileQueue.clear();
+    }
+    
+    public void setLogListener(LogListener logListener) {
+        this.logListener = logListener;
+    }
+
+    private void log(String message) {
+        if (logListener != null) {
+            logListener.onLog(message);
+        }
     }
 }

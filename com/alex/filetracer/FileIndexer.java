@@ -12,14 +12,16 @@ public class FileIndexer implements Runnable {
     private final BlockingQueue<Path> fileQueue;
     private final AtomicInteger filesProcessed;
     private final ScanListener listener;
+    private LogListener logListener;
     private final Path POISON;
 
-    public FileIndexer(IndexDatabase db, BlockingQueue<Path> fileQueue, AtomicInteger filesProcessed, ScanListener listener, Path POISON) {
+    public FileIndexer(IndexDatabase db, BlockingQueue<Path> fileQueue, AtomicInteger filesProcessed, ScanListener listener, Path POISON, LogListener logListener) {
         this.db = db;
         this.fileQueue = fileQueue;
         this.filesProcessed = filesProcessed;
         this.listener = listener;
         this.POISON = POISON;
+        this.logListener = logListener;
     }
 
     @Override
@@ -28,9 +30,10 @@ public class FileIndexer implements Runnable {
             while (true) {
                 Path path = fileQueue.take();
                 
-                System.out.println("Consumer threads are processing: " + path);
-                
-                if (path.equals(POISON)) {
+                if (!path.equals(POISON)) {
+                	log("indexing: " + path);
+                }
+                else {
                 	fileQueue.put(path);
                     break;
                 }
@@ -46,7 +49,15 @@ public class FileIndexer implements Runnable {
         } catch (Exception e) {
         	Thread.currentThread().interrupt();
         }
-        
-        System.out.println("Consumer thread terminated");
+    }
+    
+    public void setLogListener(LogListener logListener) {
+        this.logListener = logListener;
+    }
+
+    private void log(String message) {
+        if (logListener != null) {
+            logListener.onLog(message);
+        }
     }
 }
