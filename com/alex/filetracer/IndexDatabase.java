@@ -31,7 +31,6 @@ public class IndexDatabase {
         }
     }
 
-    // Literally just an add method for the SQLite db
     public synchronized void insert(Path file) {
         String sql = "INSERT OR IGNORE INTO files(filename, filepath) VALUES(?, ?)";
         
@@ -46,7 +45,6 @@ public class IndexDatabase {
         }
     }
 
-    // Also literally just a get method for the SQLite db
     public List<String> search(String query) {
         List<String> result = new ArrayList<>();
         String sql = "SELECT filepath FROM files WHERE filename LIKE ?";

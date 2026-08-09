@@ -47,16 +47,27 @@ public class MainFrame extends JFrame {
 	private JTextField directoryField;
 	private JTextField searchField;
 	private JTable table;
+	
 	private final FileTracerApp tracerApp;
+	
 	private JLabel countEntriesLabel;
 	private JLabel scanTimeLabel;
 	private JLabel throughputLabel;
+	
+	private JLabel nameLabel;
+	private JLabel pathLabel;
+	private JLabel sizeLabel;
+	private JLabel creationLabel;
+	private JLabel modifiedLabel;
+	private JLabel typeLabel;
+	
 	private JProgressBar progressBar;
 	
 	private double time = 0;
-	private int entries = 0;
 	private String dir = "";
+	
     private static final String DB_URL = "jdbc:sqlite:file_index.db";
+    
     static IndexDatabase db = new IndexDatabase();
     
 	public static void main(String[] args) {
@@ -91,10 +102,10 @@ public class MainFrame extends JFrame {
 	public MainFrame(FileTracerApp app) {
 		this.tracerApp = app;
 		
-		setResizable(false);
-		setTitle("MainFrame");
+//		setResizable(false);
+		setTitle("FileTracer v0.0.1");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 734, 664);
+		setBounds(100, 100, 734, 827);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
@@ -111,17 +122,70 @@ public class MainFrame extends JFrame {
 		// A table apparently
 		table = new JTable();
 		scrollPane.setViewportView(table);
+		loadTable();
+		
+		table.getSelectionModel().addListSelectionListener(e -> {
+		    if (!e.getValueIsAdjusting()) {
+
+		        int selectedRow = table.getSelectedRow();
+
+		        if (selectedRow == -1) {
+		            return;
+		        }
+
+		        String fileName = table.getValueAt(selectedRow, 1).toString();
+		        String filePath = table.getValueAt(selectedRow, 2).toString();
+
+		        nameLabel.setText("Name: " + fileName);
+		        pathLabel.setText("Path: " + filePath);
+
+		        Path path = Paths.get(filePath);
+
+		        try {
+		            long size = Files.size(path);
+
+		            sizeLabel.setText("Size: " + formatFileSize(size));
+
+		            var attributes = Files.readAttributes(
+		                path,
+		                java.nio.file.attribute.BasicFileAttributes.class
+		            );
+
+		            creationLabel.setText(
+		                "Created: " + attributes.creationTime()
+		            );
+
+		            modifiedLabel.setText(
+		                "Modified: " + attributes.lastModifiedTime()
+		            );
+
+		            String type = Files.probeContentType(path);
+
+		            if (type == null) {
+		                type = "Unknown";
+		            }
+
+		            typeLabel.setText("Type: " + type);
+
+		        } catch (IOException ex) {
+		            sizeLabel.setText("Size: Unavailable");
+		            creationLabel.setText("Created: Unavailable");
+		            modifiedLabel.setText("Modified: Unavailable");
+		            typeLabel.setText("Type: Unavailable");
+		        }
+		    }
+		});
 		
 		// Handle progress bar
 		JPanel progressPanel = new JPanel();
-		progressPanel.setBounds(10, 590, 698, 24);
+		progressPanel.setBounds(10, 761, 698, 24);
 		contentPane.add(progressPanel);
 		progressPanel.setLayout(new GridLayout(0, 1, 0, 0));
 		
 		// Progress bar
 		progressBar = new JProgressBar();
-		progressBar.setForeground(Color.GREEN);
 		progressPanel.add(progressBar);
+		progressBar.setForeground(Color.GREEN);
 		
 		// Tool panel
 		JPanel toolPanel = new JPanel();
@@ -147,7 +211,6 @@ public class MainFrame extends JFrame {
 		                SwingUtilities.invokeLater(() -> {
 		                	progressBar.setValue(count);
 		                	progressBar.setString(count + " files");
-		                	entries = count;
 		                });
 		            }
 
@@ -158,7 +221,7 @@ public class MainFrame extends JFrame {
 		                	
 		                	countEntriesLabel.setText("Entries count: " + db.showCount());
 		                	scanTimeLabel.setText("Scan time: " + String.format("%.3f", time));
-		                	throughputLabel.setText("Throughput: " + (int)(entries / time) + " files/sec");
+		                	throughputLabel.setText("Throughput: " + (int)(db.showCount() / time) + " files/sec");
 		                	
 		                	progressBar.setString("Done");
 		                	progressBar.setValue(progressBar.getMaximum());
@@ -166,6 +229,8 @@ public class MainFrame extends JFrame {
 		                    progressBar.setStringPainted(false);
 		                    
 		                    loadTable();
+		                    
+		                    clearInfoPanel();
 		                });
 		            }
 		        });
@@ -220,14 +285,17 @@ public class MainFrame extends JFrame {
 					SwingUtilities.invokeLater(() -> {
 						progressBar.setValue(total);
 	                	time = 0;
-	                	entries = 0;
 	                	
-	                	countEntriesLabel.setText("Entries count: " + entries);
+	                	countEntriesLabel.setText("Entries count: " + db.showCount());
 	                	scanTimeLabel.setText("Scan time: " + String.format("%.3f", time));
-	                	throughputLabel.setText("Throughput: " + (int)(entries / time) + " files/sec");
+	                	throughputLabel.setText("Throughput: " + (int)(db.showCount() / time) + " files/sec");
 	                	
 	                	progressBar.setValue(0);
 	                    progressBar.setStringPainted(false);
+	                    
+	                    loadTable();
+	                    
+	                    clearInfoPanel();
 	                });
 				} catch (Exception ex) {
 					ex.printStackTrace();
@@ -280,6 +348,7 @@ public class MainFrame extends JFrame {
 		toolPanel.add(stopButton);
 		stopButton.addActionListener(e -> {
 		    tracerApp.stopScan();
+		    loadTable();
 		});
 		
 		// Handle filtering
@@ -293,28 +362,65 @@ public class MainFrame extends JFrame {
 		toolPanel.add(filterComboBox);
 		
 		// Information panel
-		JPanel infoPanel = new JPanel();
-		infoPanel.setBounds(10, 101, 698, 24);
-		contentPane.add(infoPanel);
-		infoPanel.setLayout(null);
+		JPanel labelPanel = new JPanel();
+		labelPanel.setBounds(10, 101, 698, 24);
+		contentPane.add(labelPanel);
+		labelPanel.setLayout(null);
 		
 		// Count entries
-		countEntriesLabel = new JLabel("Entries count: 0");
+		countEntriesLabel = new JLabel("Entries count: " + db.showCount());
 		countEntriesLabel.setBounds(10, 0, 128, 24);
-		infoPanel.add(countEntriesLabel);
+		labelPanel.add(countEntriesLabel);
 		
 		// Scan time
 		scanTimeLabel = new JLabel("Scan time: 0.000");
 		scanTimeLabel.setBounds(148, 5, 128, 14);
-		infoPanel.add(scanTimeLabel);
+		labelPanel.add(scanTimeLabel);
 		
 		// Throughput
 		throughputLabel = new JLabel("Throughput: 0 files/sec");
 		throughputLabel.setBounds(286, 0, 500, 24);
-		infoPanel.add(throughputLabel);
+		labelPanel.add(throughputLabel);
 		
-		// Others
+		// Display basic information
+		JPanel infoPanel = new JPanel();
+		infoPanel.setBounds(10, 590, 698, 160);
+		contentPane.add(infoPanel);
+		infoPanel.setLayout(null);
+		
+		// Display file name
+		nameLabel = new JLabel("Name:");
+		nameLabel.setBounds(10, 11, 678, 14);
+		infoPanel.add(nameLabel);
+		
+		// Display full path
+		pathLabel = new JLabel("Path:");
+		pathLabel.setBounds(10, 36, 678, 14);
+		infoPanel.add(pathLabel);
+		
+		// Display file size
+		sizeLabel = new JLabel("Size:");
+		sizeLabel.setBounds(10, 61, 678, 14);
+		infoPanel.add(sizeLabel);
+		
+		// Display creation date
+		creationLabel = new JLabel("Created:");
+		creationLabel.setBounds(10, 86, 678, 14);
+		infoPanel.add(creationLabel);
+		
+		// Display modified date
+		modifiedLabel = new JLabel("Modified:");
+		modifiedLabel.setBounds(10, 111, 678, 14);
+		infoPanel.add(modifiedLabel);
+		
+		// Display file type
+		typeLabel = new JLabel("Type:");
+		typeLabel.setBounds(10, 136, 678, 14);
+		infoPanel.add(typeLabel);
+		
+		// Cosmetics
 		toolPanel.setBorder(BorderFactory.createDashedBorder(Color.GRAY));
+		infoPanel.setBorder(BorderFactory.createDashedBorder(Color.GRAY));
 	}
 	
 	private void loadTable() {
@@ -354,4 +460,31 @@ public class MainFrame extends JFrame {
 			e.printStackTrace();
 		}
 	}
+	
+	private String formatFileSize(long bytes) {
+	    if (bytes < 1024) {
+	        return bytes + " bytes";
+	    }
+
+	    if (bytes < 1024 * 1024) {
+	        return String.format("%.2f KB", bytes / 1024.0);
+	    }
+
+	    if (bytes < 1024 * 1024 * 1024) {
+	        return String.format("%.2f MB", bytes / (1024.0 * 1024.0));
+	    }
+
+	    return String.format("%.2f GB",
+	            bytes / (1024.0 * 1024.0 * 1024.0));
+	}
+	
+	private void clearInfoPanel() {
+		nameLabel.setText("Name:");
+		pathLabel.setText("Path:");
+		sizeLabel.setText("Size:");
+		creationLabel.setText("Created:");
+		modifiedLabel.setText("Modified:");
+		typeLabel.setText("Type:");
+	}
+
 }
