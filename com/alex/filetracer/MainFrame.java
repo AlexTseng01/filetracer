@@ -16,6 +16,8 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -151,27 +153,38 @@ public class MainFrame extends JFrame {
 		                java.nio.file.attribute.BasicFileAttributes.class
 		            );
 
+		            DateTimeFormatter formatter =
+		                    DateTimeFormatter.ofPattern("MMM d, yyyy h:mm a")
+		                                     .withZone(ZoneId.systemDefault());
+
 		            creationLabel.setText(
-		                "Created: " + attributes.creationTime()
+		                    "Created: " + formatter.format(attributes.creationTime().toInstant())
 		            );
 
 		            modifiedLabel.setText(
-		                "Modified: " + attributes.lastModifiedTime()
+		                    "Modified: " + formatter.format(attributes.lastModifiedTime().toInstant())
 		            );
 
-		            String type = Files.probeContentType(path);
-
-		            if (type == null) {
-		                type = "Unknown";
+		            String name = path.getFileName().toString();
+		            
+		            int dotLocation = name.lastIndexOf('.');
+		            
+		            String extension;
+		            
+		            if (dotLocation != -1 && dotLocation < fileName.length() - 1) {
+		            	extension = fileName.substring(dotLocation).toLowerCase();
 		            }
-
-		            typeLabel.setText("Type: " + type);
+		            else {
+		            	extension = "folder";
+		            }
+		            
+		            typeLabel.setText("Type: " + extension);
 
 		        } catch (IOException ex) {
-		            sizeLabel.setText("Size: Unavailable");
-		            creationLabel.setText("Created: Unavailable");
-		            modifiedLabel.setText("Modified: Unavailable");
-		            typeLabel.setText("Type: Unavailable");
+		            sizeLabel.setText("Size: Unknown");
+		            creationLabel.setText("Created: Unknown");
+		            modifiedLabel.setText("Modified: Unknown");
+		            typeLabel.setText("Type: Unknown");
 		        }
 		    }
 		});
@@ -198,9 +211,7 @@ public class MainFrame extends JFrame {
 		scanButton.setBounds(10, 11, 89, 23);
 		toolPanel.add(scanButton);
 		scanButton.addActionListener(e -> {
-			countEntriesLabel.setText("Entries count: 0");
-        	scanTimeLabel.setText("Scan time: 0.000");
-        	throughputLabel.setText("Throughput: 0 files/sec");
+			loadLabels(0,"0.000", 0);
         	
 		    Path origin = Paths.get(dir);
 
@@ -219,9 +230,7 @@ public class MainFrame extends JFrame {
 		                SwingUtilities.invokeLater(() -> {
 		                	time = seconds;
 		                	
-		                	countEntriesLabel.setText("Entries count: " + db.showCount());
-		                	scanTimeLabel.setText("Scan time: " + String.format("%.3f", time));
-		                	throughputLabel.setText("Throughput: " + (int)(db.showCount() / time) + " files/sec");
+		                	loadLabels(db.showCount(), String.format("%.3f", time), (int)(db.showCount() / time));
 		                	
 		                	progressBar.setString("Done");
 		                	progressBar.setValue(progressBar.getMaximum());
@@ -286,9 +295,7 @@ public class MainFrame extends JFrame {
 						progressBar.setValue(total);
 	                	time = 0;
 	                	
-	                	countEntriesLabel.setText("Entries count: " + db.showCount());
-	                	scanTimeLabel.setText("Scan time: " + String.format("%.3f", time));
-	                	throughputLabel.setText("Throughput: " + (int)(db.showCount() / time) + " files/sec");
+	                	loadLabels(db.showCount(), String.format("%.3f", time), (int)(db.showCount() / time));
 	                	
 	                	progressBar.setValue(0);
 	                    progressBar.setStringPainted(false);
@@ -423,6 +430,12 @@ public class MainFrame extends JFrame {
 		infoPanel.setBorder(BorderFactory.createDashedBorder(Color.GRAY));
 	}
 	
+	private void loadLabels(int count, String time, int throughput) {
+		countEntriesLabel.setText("Entries count: " + count);
+    	scanTimeLabel.setText("Scan time: " + time);
+    	throughputLabel.setText("Throughput: " + throughput + " files/sec");
+	}
+	
 	private void loadTable() {
 		try {
 			String sql = "SELECT filename, filepath FROM files";
@@ -474,8 +487,7 @@ public class MainFrame extends JFrame {
 	        return String.format("%.2f MB", bytes / (1024.0 * 1024.0));
 	    }
 
-	    return String.format("%.2f GB",
-	            bytes / (1024.0 * 1024.0 * 1024.0));
+	    return String.format("%.2f GB", bytes / (1024.0 * 1024.0 * 1024.0));
 	}
 	
 	private void clearInfoPanel() {
