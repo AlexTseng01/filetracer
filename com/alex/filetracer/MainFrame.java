@@ -52,6 +52,7 @@ public class MainFrame extends JFrame {
 	private final FileTracerApp tracerApp;
 	
 	private JPanel contentPane;
+	
 	private JTable table;
 	
 	private JTextField directoryField;
@@ -90,7 +91,6 @@ public class MainFrame extends JFrame {
 					// Setup
 					BlockingQueue<Path> dirQueue = new ArrayBlockingQueue<>(100000);
 			        BlockingQueue<Path> fileQueue = new ArrayBlockingQueue<>(100000);
-			        
 			        List<Thread> producers = new ArrayList<>();
 			        List<Thread> consumers = new ArrayList<>();
 			        
@@ -245,14 +245,17 @@ public class MainFrame extends JFrame {
 			loadLabels(0,"0.000", 0);
         	
 		    Path origin = Paths.get(dir);
-
+		    
+		    progressBar.setIndeterminate(true);
+		    progressBar.setString("Scanning 0 files");
+		    progressBar.setStringPainted(true);
+		    
 		    new Thread(() -> {
 		        tracerApp.runScan(origin, new ScanListener() {
 		            @Override
 		            public void onProgress(int count) {
 		                SwingUtilities.invokeLater(() -> {
-		                	progressBar.setValue(count);
-		                	progressBar.setString(count + " files");
+		                	progressBar.setString("Scanning " + count + " files");
 		                });
 		            }
 
@@ -263,10 +266,8 @@ public class MainFrame extends JFrame {
 		                	
 		                	loadLabels(db.showCount(), String.format("%.3f", time), (int)(db.showCount() / time));
 		                	
-		                	progressBar.setString("Done");
-		                	progressBar.setValue(progressBar.getMaximum());
-		                	progressBar.setValue(0);
-		                    progressBar.setStringPainted(false);
+		                	progressBar.setIndeterminate(false);
+		        		    progressBar.setStringPainted(false);
 		                    
 		                    loadTable();
 		                    clearInfoPanel();
@@ -302,15 +303,13 @@ public class MainFrame extends JFrame {
 		                progressBar.setValue(0);
 		                progressBar.setStringPainted(true);
 		            });
-					
-					int i = 0;
+										
 					for (String table : tables) {
 						stmt.executeUpdate("DELETE FROM \"" + table + "\"");
-						int progress = ++i;
 						
 						SwingUtilities.invokeLater(() -> {
-		                    progressBar.setValue(progress);
-		                    progressBar.setString("Cleaning... " + progress + "/" + total);
+		                    progressBar.setValue(total);
+		                    progressBar.setString("Cleaning");
 		                });
 						
 						try {
@@ -328,6 +327,7 @@ public class MainFrame extends JFrame {
 	                	
 	                	loadLabels(db.showCount(), String.format("%.3f", time), (int)(db.showCount() / time));
 	                	
+	                	// Clearing the database is basically instant so I don't need to do any math
 	                	progressBar.setValue(0);
 	                    progressBar.setStringPainted(false);
 	                    
@@ -341,6 +341,22 @@ public class MainFrame extends JFrame {
 				}
 			}).start();
 		});
+		
+		// Stop button
+		JButton stopButton = new JButton("Stop");
+		stopButton.setBounds(10, 45, 89, 23);
+		toolPanel.add(stopButton);
+		stopButton.addActionListener(e -> {
+		    tracerApp.stopScan();
+		    loadTable();
+		    progressBar.setIndeterminate(false);
+		    progressBar.setStringPainted(false);
+		});
+				
+		// Pause button
+		JButton pauseButton = new JButton("Pause");
+		pauseButton.setBounds(109, 44, 89, 23);
+		toolPanel.add(pauseButton);
 		
 		// Directory field
 		JLabel directoryLabel = new JLabel("Directory:");
@@ -389,20 +405,6 @@ public class MainFrame extends JFrame {
 		filterComboBox.setModel(new DefaultComboBoxModel(new String[] {"All", "Folders", "Files"}));
 		filterComboBox.setBounds(667, 43, 144, 22);
 		toolPanel.add(filterComboBox);
-		
-		// Pause button
-		JButton pauseButton = new JButton("Pause");
-		pauseButton.setBounds(109, 44, 89, 23);
-		toolPanel.add(pauseButton);
-		
-		// Stop button
-		JButton stopButton = new JButton("Stop");
-		stopButton.setBounds(10, 45, 89, 23);
-		toolPanel.add(stopButton);
-		stopButton.addActionListener(e -> {
-		    tracerApp.stopScan();
-		    loadTable();
-		});
 		
 		// Information 2 panel
 		JPanel infoPanel_B = new JPanel();

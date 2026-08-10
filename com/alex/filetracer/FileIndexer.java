@@ -34,6 +34,7 @@ public class FileIndexer implements Runnable {
                 }
                 
                 db.insert(path);
+                System.out.println("Indexing: " + path);
                 
                 int count = filesProcessed.incrementAndGet();
                 

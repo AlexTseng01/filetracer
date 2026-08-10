@@ -125,6 +125,7 @@ public class FileTracerApp {
         consumers.clear();
     }
     
+    // Stop an active scan
     public void stopScan() {
     	alive.set(false);
     	
