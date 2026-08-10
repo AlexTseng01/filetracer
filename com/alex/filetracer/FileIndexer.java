@@ -31,7 +31,7 @@ public class FileIndexer implements Runnable {
                 Path path = fileQueue.take();
                 
                 if (!path.equals(POISON)) {
-                	log("indexing: " + path);
+//                	log("indexing: " + path);
                 }
                 else {
                 	fileQueue.put(path);

@@ -41,7 +41,7 @@ public class FileScanner implements Runnable {
                 try {
                     scan(path);
                     if (!path.equals(POISON)) {
-                    	log("processing: " + path);
+//                    	log("processing: " + path);
                     }
                 } finally {
                     activeScanners.decrementAndGet();

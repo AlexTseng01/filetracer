@@ -116,7 +116,7 @@ public class MainFrame extends JFrame {
 		setResizable(false);
 		setTitle("FileTracer v0.0.1");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 1369, 827);
+		setBounds(100, 100, 1523, 827);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
@@ -188,6 +188,28 @@ public class MainFrame extends JFrame {
 		            creationLabel.setText("Created: Unknown");
 		            modifiedLabel.setText("Modified: Unknown");
 		            typeLabel.setText("Type: Unknown");
+		        }
+		    }
+		});
+		
+		table.addMouseListener(new java.awt.event.MouseAdapter() {
+		    @Override
+		    public void mouseClicked(java.awt.event.MouseEvent e) {
+		        if (e.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(e)) {
+
+		            int row = table.rowAtPoint(e.getPoint());
+
+		            if (row == -1) {
+		                return;
+		            }
+
+		            int modelRow = table.convertRowIndexToModel(row);
+
+		            String filePath = table.getModel()
+		                    .getValueAt(modelRow, 2)
+		                    .toString();
+
+		            openInFileExplorer(filePath);
 		        }
 		    }
 		});
@@ -323,7 +345,7 @@ public class MainFrame extends JFrame {
 		directoryField.setColumns(10);
 		directoryField.addActionListener(e -> {
 		    dir = directoryField.getText().trim();
-		    System.out.println("Directory set to: " + dir);
+		    terminalPrint("Directory set to: " + dir);
 		});
 		
 		// Handle search input
@@ -429,7 +451,7 @@ public class MainFrame extends JFrame {
 		
 		// Terminal
 		JPanel terminalPanel = new JPanel();
-		terminalPanel.setBounds(841, 11, 502, 774);
+		terminalPanel.setBounds(841, 11, 656, 774);
 		contentPane.add(terminalPanel);
 		terminalPanel.setLayout(new BorderLayout());
 		
@@ -463,6 +485,7 @@ public class MainFrame extends JFrame {
 			ResultSet rs = stmt.executeQuery(sql);
 			
 			DefaultTableModel model = new DefaultTableModel();
+			table.setDefaultEditor(Object.class, null);
 			
 			model.addColumn("#");
 			model.addColumn("Name");
@@ -477,7 +500,7 @@ public class MainFrame extends JFrame {
 			table.setModel(model);
 			
 			// Adjust width of rows
-			table.getColumnModel().getColumn(0).setPreferredWidth(40);
+			table.getColumnModel().getColumn(0).setPreferredWidth(80);
 			table.getColumnModel().getColumn(1).setPreferredWidth(500);
 			table.getColumnModel().getColumn(2).setPreferredWidth(500);
 			
@@ -526,5 +549,29 @@ public class MainFrame extends JFrame {
 	
 	private void terminalClear() {
 		terminalTextArea.setText("");
+	}
+	
+	private void openInFileExplorer(String filePath) {
+	    try {
+	        Path path = Paths.get(filePath);
+
+	        if (!Files.exists(path)) {
+	            terminalPrint("File does not exist: " + filePath);
+	            return;
+	        }
+
+	        if (Files.isDirectory(path)) {
+	            new ProcessBuilder("explorer.exe", path.toString()).start();
+	        } else {
+	            new ProcessBuilder(
+	                "explorer.exe",
+	                "/select,",
+	                path.toString()
+	            ).start();
+	        }
+
+	    } catch (IOException ex) {
+	        terminalPrint("Failed to open File Explorer: " + ex.getMessage());
+	    }
 	}
 }
