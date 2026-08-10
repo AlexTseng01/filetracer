@@ -14,15 +14,13 @@ public class FileScanner implements Runnable {
     private final AtomicInteger activeScanners;
     private final Path POISON;
     private AtomicBoolean alive;
-    private LogListener logListener;
     
-    public FileScanner(BlockingQueue<Path> dirQueue, BlockingQueue<Path> fileQueue, AtomicInteger activeScanners, Path POISON, AtomicBoolean alive, LogListener logListener) {
+    public FileScanner(BlockingQueue<Path> dirQueue, BlockingQueue<Path> fileQueue, AtomicInteger activeScanners, Path POISON, AtomicBoolean alive) {
         this.dirQueue = dirQueue;
         this.fileQueue = fileQueue;
         this.activeScanners = activeScanners;
         this.POISON = POISON;
         this.alive = alive;
-        this.logListener = logListener;
     }
 
     @Override
@@ -30,7 +28,6 @@ public class FileScanner implements Runnable {
         while (alive.get()) {
             try {
                 Path path = dirQueue.take();
-//                System.out.println("dirQueue: " + dirQueue.size() + "/" + dirQueue.remainingCapacity());
 
                 if (path.equals(POISON)) {
                     break;
@@ -40,9 +37,6 @@ public class FileScanner implements Runnable {
 
                 try {
                     scan(path);
-                    if (!path.equals(POISON)) {
-//                    	log("processing: " + path);
-                    }
                 } finally {
                     activeScanners.decrementAndGet();
                 }
@@ -85,17 +79,7 @@ public class FileScanner implements Runnable {
                 }
             });
         } catch (AccessDeniedException e) {
-        	log("access denied: " + dir);
-        }
-    }
-    
-    public void setLogListener(LogListener logListener) {
-        this.logListener = logListener;
-    }
-
-    private void log(String message) {
-        if (logListener != null) {
-            logListener.onLog(message);
+        	
         }
     }
 }

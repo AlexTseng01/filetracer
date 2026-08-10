@@ -68,9 +68,7 @@ public class MainFrame extends JFrame {
 	private JLabel typeLabel;
 	
 	private JProgressBar progressBar;
-	
-	private JTextArea terminalTextArea;
-	
+		
 	private double time = 0;
 	
 	private String dir = "";
@@ -100,10 +98,6 @@ public class MainFrame extends JFrame {
 					
 					MainFrame frame = new MainFrame(app);
 					
-					app.setLogListener(message -> {
-					    frame.terminalPrint(message);
-					});
-					
 					frame.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -118,7 +112,7 @@ public class MainFrame extends JFrame {
 		setResizable(false);
 		setTitle("FileTracer v0.0.1");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 1523, 827);
+		setBounds(100, 100, 858, 827);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
@@ -339,7 +333,6 @@ public class MainFrame extends JFrame {
 	                    
 	                    loadTable();
 	                    clearInfoPanel();
-	                    clearTerminal();
 	                    clearSearchField();
 	                    clearDirectoryField();
 	                });
@@ -360,7 +353,6 @@ public class MainFrame extends JFrame {
 		directoryField.setColumns(10);
 		directoryField.addActionListener(e -> {
 		    dir = directoryField.getText().trim();
-		    terminalPrint("Directory set to: " + dir);
 		});
 		
 		// Search field
@@ -457,20 +449,6 @@ public class MainFrame extends JFrame {
 		progressBar = new JProgressBar();
 		progressPanel.add(progressBar);
 		progressBar.setForeground(Color.GREEN);
-		
-		// Terminal
-		JPanel terminalPanel = new JPanel();
-		terminalPanel.setBounds(841, 11, 656, 774);
-		contentPane.add(terminalPanel);
-		terminalPanel.setLayout(new BorderLayout());
-		
-		JScrollPane terminalPane = new JScrollPane();
-		terminalPanel.add(terminalPane, BorderLayout.CENTER);
-		
-		terminalTextArea = new JTextArea();
-		terminalTextArea.setEditable(false);
-
-		terminalPane.setViewportView(terminalTextArea);
 		
 		// Cosmetics
 		toolPanel.setBorder(BorderFactory.createDashedBorder(Color.GRAY));
@@ -592,7 +570,6 @@ public class MainFrame extends JFrame {
 	        Path path = Paths.get(filePath);
 
 	        if (!Files.exists(path)) {
-	            terminalPrint("File does not exist: " + filePath);
 	            return;
 	        }
 
@@ -603,19 +580,9 @@ public class MainFrame extends JFrame {
 	        }
 
 	    } catch (IOException ex) {
-	        terminalPrint("Failed to open File Explorer: " + ex.getMessage());
+	    	
 	    }
 	}
-	
-	// Locally used terminal printer
-		public void terminalPrint(String msg) {
-			SwingUtilities.invokeLater(() -> {
-		        terminalTextArea.append(msg + "\n");
-		        terminalTextArea.setCaretPosition(
-		            terminalTextArea.getDocument().getLength()
-		        );
-		    });
-		}
 	
 	// Clean up methods
 	private void clearInfoPanel() {
@@ -626,10 +593,7 @@ public class MainFrame extends JFrame {
 		modifiedLabel.setText("Modified:");
 		typeLabel.setText("Type:");
 	}
-	
-	private void clearTerminal() {
-		terminalTextArea.setText("");
-	}
+
 	
 	private void clearSearchField() {
 		searchField.setText("");
