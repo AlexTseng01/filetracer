@@ -14,6 +14,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.time.ZoneId;
@@ -327,6 +328,8 @@ public class MainFrame extends JFrame {
 	                    loadTable();
 	                    clearInfoPanel();
 	                    terminalClear();
+	                    clearSearchField();
+	                    clearDirectoryField();
 	                });
 				} catch (Exception ex) {
 					ex.printStackTrace();
@@ -357,6 +360,11 @@ public class MainFrame extends JFrame {
 		searchField.setBounds(336, 45, 186, 20);
 		toolPanel.add(searchField);
 		searchField.setColumns(10);
+		
+		searchField.addActionListener(e -> {
+			String sub = searchField.getText().trim();
+			loadSearches(sub);
+		});
 		
 		// Handle sorting
 		JComboBox sortComboBox = new JComboBox();
@@ -513,6 +521,52 @@ public class MainFrame extends JFrame {
 		}
 	}
 	
+	private void loadSearches(String sub) {
+		try {
+			String sql = "SELECT filename, filepath FROM files WHERE filename LIKE ? OR filepath LIKE ?";
+			
+			Connection conn = DriverManager.getConnection(DB_URL);
+			
+			PreparedStatement stmt = conn.prepareStatement(sql);
+			
+			String search = "%" + sub + "%";
+			
+			stmt.setString(1,  search);
+			stmt.setString(2,  search);
+			
+			ResultSet rs = stmt.executeQuery();
+			
+			DefaultTableModel model = new DefaultTableModel();
+			table.setDefaultEditor(Object.class, null);
+			
+			model.addColumn("#");
+			model.addColumn("Name");
+			model.addColumn("Path");
+			
+			int number = 1;
+			
+			while(rs.next()) {
+				model.addRow(new Object[] {number++, rs.getString("filename"), rs.getString("filepath")});
+			}
+			
+			table.setModel(model);
+			
+			// Adjust width of rows
+			table.getColumnModel().getColumn(0).setPreferredWidth(80);
+			table.getColumnModel().getColumn(1).setPreferredWidth(500);
+			table.getColumnModel().getColumn(2).setPreferredWidth(500);
+			
+			rs.close();
+			stmt.close();
+			conn.close();
+			
+			countEntriesLabel.setText("Entries count: " + (number - 1));
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
 	private String formatFileSize(long bytes) {
 	    if (bytes < 1024) {
 	        return bytes + " bytes";
@@ -563,15 +617,19 @@ public class MainFrame extends JFrame {
 	        if (Files.isDirectory(path)) {
 	            new ProcessBuilder("explorer.exe", path.toString()).start();
 	        } else {
-	            new ProcessBuilder(
-	                "explorer.exe",
-	                "/select,",
-	                path.toString()
-	            ).start();
+	            new ProcessBuilder("explorer.exe","/select,",path.toString()).start();
 	        }
 
 	    } catch (IOException ex) {
 	        terminalPrint("Failed to open File Explorer: " + ex.getMessage());
 	    }
+	}
+	
+	private void clearSearchField() {
+		searchField.setText("");
+	}
+	
+	private void clearDirectoryField() {
+		directoryField.setText("");
 	}
 }
