@@ -49,17 +49,17 @@ import javax.swing.JTextArea;
 public class MainFrame extends JFrame {
 
 	private static final long serialVersionUID = 1L;
+	private final FileTracerApp tracerApp;
+	
 	private JPanel contentPane;
-	private JTextField directoryField;
-	private JTextField searchField;
 	private JTable table;
 	
-	private final FileTracerApp tracerApp;
+	private JTextField directoryField;
+	private JTextField searchField;
 	
 	private JLabel countEntriesLabel;
 	private JLabel scanTimeLabel;
 	private JLabel throughputLabel;
-	
 	private JLabel nameLabel;
 	private JLabel pathLabel;
 	private JLabel sizeLabel;
@@ -72,6 +72,7 @@ public class MainFrame extends JFrame {
 	private JTextArea terminalTextArea;
 	
 	private double time = 0;
+	
 	private String dir = "";
 	
     private static final String DB_URL = "jdbc:sqlite:file_index.db";
@@ -123,14 +124,6 @@ public class MainFrame extends JFrame {
 		setContentPane(contentPane);
 		contentPane.setLayout(null);
 		
-		JPanel tablePanel = new JPanel();
-		tablePanel.setBounds(10, 136, 821, 443);
-		contentPane.add(tablePanel);
-		tablePanel.setLayout(new GridLayout(0, 1, 0, 0));
-		
-		JScrollPane scrollPane = new JScrollPane();
-		tablePanel.add(scrollPane);
-		
 		// Information 1 panel
 		JPanel infoPanel_A = new JPanel();
 		infoPanel_A.setBounds(10, 101, 821, 24);
@@ -152,7 +145,15 @@ public class MainFrame extends JFrame {
 		throughputLabel.setBounds(286, 0, 500, 24);
 		infoPanel_A.add(throughputLabel);
 		
-		// Table
+		// Table panel
+		JPanel tablePanel = new JPanel();
+		tablePanel.setBounds(10, 136, 821, 443);
+		contentPane.add(tablePanel);
+		tablePanel.setLayout(new GridLayout(0, 1, 0, 0));
+		
+		JScrollPane scrollPane = new JScrollPane();
+		tablePanel.add(scrollPane);
+		
 		table = new JTable();
 		scrollPane.setViewportView(table);
 		loadTable();
@@ -265,9 +266,7 @@ public class MainFrame extends JFrame {
 		            public void onComplete(double seconds) {
 		                SwingUtilities.invokeLater(() -> {
 		                	time = seconds;
-		                	
-		                	loadLabels(db.showCount(), String.format("%.3f", time), (int)(db.showCount() / time));
-		                	
+		                			                	
 		                	progressBar.setString("Done");
 		                	progressBar.setValue(progressBar.getMaximum());
 		                	progressBar.setValue(0);
@@ -287,7 +286,7 @@ public class MainFrame extends JFrame {
 		cleanButton.setBounds(109, 11, 89, 23);
 		toolPanel.add(cleanButton);
 		cleanButton.addActionListener(e -> {
-			tracerApp.stopScan(); // Stop scanning first
+			tracerApp.stopScan();
 			new Thread(() -> {
 				try (Connection connection = DriverManager.getConnection(DB_URL); Statement stmt = connection.createStatement()) {
 					connection.setAutoCommit(true);
@@ -330,9 +329,7 @@ public class MainFrame extends JFrame {
 					SwingUtilities.invokeLater(() -> {
 						progressBar.setValue(total);
 	                	time = 0;
-	                	
-	                	loadLabels(db.showCount(), String.format("%.3f", time), (int)(db.showCount() / time));
-	                	
+	                		                	
 	                	progressBar.setValue(0);
 	                    progressBar.setStringPainted(false);
 	                    
@@ -509,7 +506,6 @@ public class MainFrame extends JFrame {
 			
 			table.setModel(model);
 			
-			// Adjust width of rows
 			table.getColumnModel().getColumn(0).setPreferredWidth(80);
 			table.getColumnModel().getColumn(1).setPreferredWidth(500);
 			table.getColumnModel().getColumn(2).setPreferredWidth(500);
@@ -554,7 +550,6 @@ public class MainFrame extends JFrame {
 			
 			table.setModel(model);
 			
-			// Adjust width of rows
 			table.getColumnModel().getColumn(0).setPreferredWidth(80);
 			table.getColumnModel().getColumn(1).setPreferredWidth(500);
 			table.getColumnModel().getColumn(2).setPreferredWidth(500);
@@ -587,16 +582,6 @@ public class MainFrame extends JFrame {
 	    return String.format("%.2f GB", bytes / (1024.0 * 1024.0 * 1024.0));
 	}
 	
-	// Locally used terminal printer
-	public void terminalPrint(String msg) {
-		SwingUtilities.invokeLater(() -> {
-	        terminalTextArea.append(msg + "\n");
-	        terminalTextArea.setCaretPosition(
-	            terminalTextArea.getDocument().getLength()
-	        );
-	    });
-	}
-	
 	// Open a specific file in file explorer
 	private void openInFileExplorer(String filePath) {
 	    try {
@@ -617,6 +602,16 @@ public class MainFrame extends JFrame {
 	        terminalPrint("Failed to open File Explorer: " + ex.getMessage());
 	    }
 	}
+	
+	// Locally used terminal printer
+		public void terminalPrint(String msg) {
+			SwingUtilities.invokeLater(() -> {
+		        terminalTextArea.append(msg + "\n");
+		        terminalTextArea.setCaretPosition(
+		            terminalTextArea.getDocument().getLength()
+		        );
+		    });
+		}
 	
 	// Clean up methods
 	private void clearInfoPanel() {
