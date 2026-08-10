@@ -266,7 +266,9 @@ public class MainFrame extends JFrame {
 		            public void onComplete(double seconds) {
 		                SwingUtilities.invokeLater(() -> {
 		                	time = seconds;
-		                			                	
+		                	
+		                	loadLabels(db.showCount(), String.format("%.3f", time), (int)(db.showCount() / time));
+		                	
 		                	progressBar.setString("Done");
 		                	progressBar.setValue(progressBar.getMaximum());
 		                	progressBar.setValue(0);
@@ -329,7 +331,9 @@ public class MainFrame extends JFrame {
 					SwingUtilities.invokeLater(() -> {
 						progressBar.setValue(total);
 	                	time = 0;
-	                		                	
+	                	
+	                	loadLabels(db.showCount(), String.format("%.3f", time), (int)(db.showCount() / time));
+	                	
 	                	progressBar.setValue(0);
 	                    progressBar.setStringPainted(false);
 	                    
