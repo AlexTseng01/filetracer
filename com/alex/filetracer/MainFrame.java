@@ -123,15 +123,36 @@ public class MainFrame extends JFrame {
 		setContentPane(contentPane);
 		contentPane.setLayout(null);
 		
-		JPanel resultsPanel = new JPanel();
-		resultsPanel.setBounds(10, 136, 821, 443);
-		contentPane.add(resultsPanel);
-		resultsPanel.setLayout(new GridLayout(0, 1, 0, 0));
+		JPanel tablePanel = new JPanel();
+		tablePanel.setBounds(10, 136, 821, 443);
+		contentPane.add(tablePanel);
+		tablePanel.setLayout(new GridLayout(0, 1, 0, 0));
 		
 		JScrollPane scrollPane = new JScrollPane();
-		resultsPanel.add(scrollPane);
+		tablePanel.add(scrollPane);
 		
-		// A table apparently
+		// Information 1 panel
+		JPanel infoPanel_A = new JPanel();
+		infoPanel_A.setBounds(10, 101, 821, 24);
+		contentPane.add(infoPanel_A);
+		infoPanel_A.setLayout(null);
+		
+		// Count entries
+		countEntriesLabel = new JLabel("Entries count: " + db.showCount());
+		countEntriesLabel.setBounds(10, 0, 128, 24);
+		infoPanel_A.add(countEntriesLabel);
+		
+		// Scan time
+		scanTimeLabel = new JLabel("Scan time: 0.000");
+		scanTimeLabel.setBounds(148, 5, 128, 14);
+		infoPanel_A.add(scanTimeLabel);
+		
+		// Throughput
+		throughputLabel = new JLabel("Throughput: 0 files/sec");
+		throughputLabel.setBounds(286, 0, 500, 24);
+		infoPanel_A.add(throughputLabel);
+		
+		// Table
 		table = new JTable();
 		scrollPane.setViewportView(table);
 		loadTable();
@@ -215,24 +236,13 @@ public class MainFrame extends JFrame {
 		    }
 		});
 		
-		// Handle progress bar
-		JPanel progressPanel = new JPanel();
-		progressPanel.setBounds(10, 761, 821, 24);
-		contentPane.add(progressPanel);
-		progressPanel.setLayout(new GridLayout(0, 1, 0, 0));
-		
-		// Progress bar
-		progressBar = new JProgressBar();
-		progressPanel.add(progressBar);
-		progressBar.setForeground(Color.GREEN);
-		
 		// Tool panel
 		JPanel toolPanel = new JPanel();
 		toolPanel.setBounds(10, 11, 821, 79);
 		contentPane.add(toolPanel);
 		toolPanel.setLayout(null);
 		
-		// Handle scanning
+		// Scan button
 		JButton scanButton = new JButton("Scan");
 		scanButton.setBounds(10, 11, 89, 23);
 		toolPanel.add(scanButton);
@@ -265,13 +275,14 @@ public class MainFrame extends JFrame {
 		                    
 		                    loadTable();
 		                    clearInfoPanel();
+		                    clearSearchField();
 		                });
 		            }
 		        });
 		    }).start();
 		});
 		
-		// Handle cleaning database
+		// Clean button
 		JButton cleanButton = new JButton("Clean");
 		cleanButton.setBounds(109, 11, 89, 23);
 		toolPanel.add(cleanButton);
@@ -327,7 +338,7 @@ public class MainFrame extends JFrame {
 	                    
 	                    loadTable();
 	                    clearInfoPanel();
-	                    terminalClear();
+	                    clearTerminal();
 	                    clearSearchField();
 	                    clearDirectoryField();
 	                });
@@ -337,7 +348,7 @@ public class MainFrame extends JFrame {
 			}).start();
 		});
 		
-		// Handle directory input
+		// Directory field
 		JLabel directoryLabel = new JLabel("Directory:");
 		directoryLabel.setBounds(268, 17, 58, 14);
 		toolPanel.add(directoryLabel);
@@ -351,7 +362,7 @@ public class MainFrame extends JFrame {
 		    terminalPrint("Directory set to: " + dir);
 		});
 		
-		// Handle search input
+		// Search field
 		JLabel searchLabel = new JLabel("Search:");
 		searchLabel.setBounds(268, 51, 58, 14);
 		toolPanel.add(searchLabel);
@@ -366,7 +377,7 @@ public class MainFrame extends JFrame {
 			loadSearches(sub);
 		});
 		
-		// Handle sorting
+		// Sort button
 		JComboBox sortComboBox = new JComboBox();
 		sortComboBox.setModel(new DefaultComboBoxModel(new String[] {"Alphabetical (A-Z)", "Alphabetical (Z-A)", "Recently modified", "Oldest modified"}));
 		sortComboBox.setBounds(667, 8, 144, 22);
@@ -376,21 +387,7 @@ public class MainFrame extends JFrame {
 		sortLabel.setBounds(595, 14, 62, 14);
 		toolPanel.add(sortLabel);
 		
-		// Handle pausing
-		JButton pauseButton = new JButton("Pause");
-		pauseButton.setBounds(109, 44, 89, 23);
-		toolPanel.add(pauseButton);
-		
-		// Stop threads
-		JButton stopButton = new JButton("Stop");
-		stopButton.setBounds(10, 45, 89, 23);
-		toolPanel.add(stopButton);
-		stopButton.addActionListener(e -> {
-		    tracerApp.stopScan();
-		    loadTable();
-		});
-		
-		// Handle filtering
+		// Filter button
 		JLabel filterLabel = new JLabel("Filter by:");
 		filterLabel.setBounds(595, 47, 62, 14);
 		toolPanel.add(filterLabel);
@@ -400,62 +397,65 @@ public class MainFrame extends JFrame {
 		filterComboBox.setBounds(667, 43, 144, 22);
 		toolPanel.add(filterComboBox);
 		
-		// Information panel
-		JPanel labelPanel = new JPanel();
-		labelPanel.setBounds(10, 101, 821, 24);
-		contentPane.add(labelPanel);
-		labelPanel.setLayout(null);
+		// Pause button
+		JButton pauseButton = new JButton("Pause");
+		pauseButton.setBounds(109, 44, 89, 23);
+		toolPanel.add(pauseButton);
 		
-		// Count entries
-		countEntriesLabel = new JLabel("Entries count: " + db.showCount());
-		countEntriesLabel.setBounds(10, 0, 128, 24);
-		labelPanel.add(countEntriesLabel);
+		// Stop button
+		JButton stopButton = new JButton("Stop");
+		stopButton.setBounds(10, 45, 89, 23);
+		toolPanel.add(stopButton);
+		stopButton.addActionListener(e -> {
+		    tracerApp.stopScan();
+		    loadTable();
+		});
 		
-		// Scan time
-		scanTimeLabel = new JLabel("Scan time: 0.000");
-		scanTimeLabel.setBounds(148, 5, 128, 14);
-		labelPanel.add(scanTimeLabel);
-		
-		// Throughput
-		throughputLabel = new JLabel("Throughput: 0 files/sec");
-		throughputLabel.setBounds(286, 0, 500, 24);
-		labelPanel.add(throughputLabel);
-		
-		// Display basic information
-		JPanel infoPanel = new JPanel();
-		infoPanel.setBounds(10, 590, 821, 160);
-		contentPane.add(infoPanel);
-		infoPanel.setLayout(null);
+		// Information 2 panel
+		JPanel infoPanel_B = new JPanel();
+		infoPanel_B.setBounds(10, 590, 821, 160);
+		contentPane.add(infoPanel_B);
+		infoPanel_B.setLayout(null);
 		
 		// Display file name
 		nameLabel = new JLabel("Name:");
 		nameLabel.setBounds(10, 11, 801, 14);
-		infoPanel.add(nameLabel);
+		infoPanel_B.add(nameLabel);
 		
 		// Display full path
 		pathLabel = new JLabel("Path:");
 		pathLabel.setBounds(10, 36, 801, 14);
-		infoPanel.add(pathLabel);
+		infoPanel_B.add(pathLabel);
 		
 		// Display file size
 		sizeLabel = new JLabel("Size:");
 		sizeLabel.setBounds(10, 61, 801, 14);
-		infoPanel.add(sizeLabel);
+		infoPanel_B.add(sizeLabel);
 		
 		// Display creation date
 		creationLabel = new JLabel("Created:");
 		creationLabel.setBounds(10, 86, 801, 14);
-		infoPanel.add(creationLabel);
+		infoPanel_B.add(creationLabel);
 		
 		// Display modified date
 		modifiedLabel = new JLabel("Modified:");
 		modifiedLabel.setBounds(10, 111, 801, 14);
-		infoPanel.add(modifiedLabel);
+		infoPanel_B.add(modifiedLabel);
 		
 		// Display file type
 		typeLabel = new JLabel("Type:");
 		typeLabel.setBounds(10, 136, 801, 14);
-		infoPanel.add(typeLabel);
+		infoPanel_B.add(typeLabel);
+		
+		// Progress bar
+		JPanel progressPanel = new JPanel();
+		progressPanel.setBounds(10, 761, 821, 24);
+		contentPane.add(progressPanel);
+		progressPanel.setLayout(new GridLayout(0, 1, 0, 0));
+		
+		progressBar = new JProgressBar();
+		progressPanel.add(progressBar);
+		progressBar.setForeground(Color.GREEN);
 		
 		// Terminal
 		JPanel terminalPanel = new JPanel();
@@ -473,15 +473,17 @@ public class MainFrame extends JFrame {
 		
 		// Cosmetics
 		toolPanel.setBorder(BorderFactory.createDashedBorder(Color.GRAY));
-		infoPanel.setBorder(BorderFactory.createDashedBorder(Color.GRAY));
+		infoPanel_B.setBorder(BorderFactory.createDashedBorder(Color.GRAY));
 	}
 	
+	// Update labels
 	private void loadLabels(int count, String time, int throughput) {
 		countEntriesLabel.setText("Entries count: " + count);
     	scanTimeLabel.setText("Scan time: " + time);
     	throughputLabel.setText("Throughput: " + throughput + " files/sec");
 	}
 	
+	// Display entire database on table
 	private void loadTable() {
 		try {
 			String sql = "SELECT filename, filepath FROM files";
@@ -521,6 +523,7 @@ public class MainFrame extends JFrame {
 		}
 	}
 	
+	// Display search results on table
 	private void loadSearches(String sub) {
 		try {
 			String sql = "SELECT filename, filepath FROM files WHERE filename LIKE ? OR filepath LIKE ?";
@@ -567,6 +570,7 @@ public class MainFrame extends JFrame {
 		}
 	}
 	
+	// Format file size
 	private String formatFileSize(long bytes) {
 	    if (bytes < 1024) {
 	        return bytes + " bytes";
@@ -583,15 +587,7 @@ public class MainFrame extends JFrame {
 	    return String.format("%.2f GB", bytes / (1024.0 * 1024.0 * 1024.0));
 	}
 	
-	private void clearInfoPanel() {
-		nameLabel.setText("Name:");
-		pathLabel.setText("Path:");
-		sizeLabel.setText("Size:");
-		creationLabel.setText("Created:");
-		modifiedLabel.setText("Modified:");
-		typeLabel.setText("Type:");
-	}
-	
+	// Locally used terminal printer
 	public void terminalPrint(String msg) {
 		SwingUtilities.invokeLater(() -> {
 	        terminalTextArea.append(msg + "\n");
@@ -601,10 +597,7 @@ public class MainFrame extends JFrame {
 	    });
 	}
 	
-	private void terminalClear() {
-		terminalTextArea.setText("");
-	}
-	
+	// Open a specific file in file explorer
 	private void openInFileExplorer(String filePath) {
 	    try {
 	        Path path = Paths.get(filePath);
@@ -623,6 +616,20 @@ public class MainFrame extends JFrame {
 	    } catch (IOException ex) {
 	        terminalPrint("Failed to open File Explorer: " + ex.getMessage());
 	    }
+	}
+	
+	// Clean up methods
+	private void clearInfoPanel() {
+		nameLabel.setText("Name:");
+		pathLabel.setText("Path:");
+		sizeLabel.setText("Size:");
+		creationLabel.setText("Created:");
+		modifiedLabel.setText("Modified:");
+		typeLabel.setText("Type:");
+	}
+	
+	private void clearTerminal() {
+		terminalTextArea.setText("");
 	}
 	
 	private void clearSearchField() {
