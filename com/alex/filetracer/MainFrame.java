@@ -348,8 +348,11 @@ public class MainFrame extends JFrame {
 		toolPanel.add(stopButton);
 		stopButton.addActionListener(e -> {
 		    tracerApp.stopScan();
+		    
 		    loadTable();
+		    
 		    progressBar.setIndeterminate(false);
+		    progressBar.setValue(0);
 		    progressBar.setStringPainted(false);
 		});
 				
@@ -595,7 +598,6 @@ public class MainFrame extends JFrame {
 		modifiedLabel.setText("Modified:");
 		typeLabel.setText("Type:");
 	}
-
 	
 	private void clearSearchField() {
 		searchField.setText("");
