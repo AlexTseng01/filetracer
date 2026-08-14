@@ -1,3 +1,13 @@
+/*
+ * Planned features:
+ * 1. Locate empty folders
+ * 2. Sort or filter file size
+ * 3. Add column for file size
+ * 4. Sort drop down menu replaced with clicking on database column names
+ * 5. Locate empty files (0 bytes)
+ * 6. Searching results in progress bar loading or flashing
+ * */
+
 package com.alex.filetracer;
 
 import java.awt.EventQueue;
@@ -372,6 +382,7 @@ public class MainFrame extends JFrame {
 		directoryField.setColumns(10);
 		directoryField.addActionListener(e -> {
 		    dir = directoryField.getText().trim();
+		    System.out.println("Directory set to: "+ dir);
 		});
 		
 		// Search field
@@ -386,6 +397,7 @@ public class MainFrame extends JFrame {
 		
 		searchField.addActionListener(e -> {
 			String sub = searchField.getText().trim();
+
 			loadSearches(sub);
 		});
 		
@@ -470,7 +482,7 @@ public class MainFrame extends JFrame {
 	// Display entire database on table
 	private void loadTable() {
 		try {
-			String sql = "SELECT filename, filepath FROM files";
+			String sql = "SELECT filename, filepath, size FROM files";
 			
 			Connection conn = DriverManager.getConnection(DB_URL);
 			
@@ -484,11 +496,13 @@ public class MainFrame extends JFrame {
 			model.addColumn("#");
 			model.addColumn("Name");
 			model.addColumn("Path");
+			model.addColumn("Size");
 			
 			int number = 1;
 			
 			while(rs.next()) {
-				model.addRow(new Object[] {number++, rs.getString("filename"), rs.getString("filepath")});
+				long size = rs.getLong("size");
+				model.addRow(new Object[] {number++, rs.getString("filename"), rs.getString("filepath"), formatFileSize(size)});
 			}
 			
 			table.setModel(model);
@@ -496,6 +510,7 @@ public class MainFrame extends JFrame {
 			table.getColumnModel().getColumn(0).setPreferredWidth(80);
 			table.getColumnModel().getColumn(1).setPreferredWidth(500);
 			table.getColumnModel().getColumn(2).setPreferredWidth(500);
+			table.getColumnModel().getColumn(3).setPreferredWidth(80);
 			
 			rs.close();
 			stmt.close();
@@ -509,7 +524,7 @@ public class MainFrame extends JFrame {
 	// Display search results on table
 	private void loadSearches(String sub) {
 		try {
-			String sql = "SELECT filename, filepath FROM files WHERE filename LIKE ? OR filepath LIKE ?";
+			String sql = "SELECT filename, filepath, size FROM files WHERE filename LIKE ? OR filepath LIKE ? OR size LIKE ?";
 			
 			Connection conn = DriverManager.getConnection(DB_URL);
 			
@@ -528,11 +543,13 @@ public class MainFrame extends JFrame {
 			model.addColumn("#");
 			model.addColumn("Name");
 			model.addColumn("Path");
+			model.addColumn("Size");
 			
 			int number = 1;
 			
 			while(rs.next()) {
-				model.addRow(new Object[] {number++, rs.getString("filename"), rs.getString("filepath")});
+				long size = rs.getLong("size");
+				model.addRow(new Object[] {number++, rs.getString("filename"), rs.getString("filepath"), formatFileSize(size)});
 			}
 			
 			table.setModel(model);
@@ -540,6 +557,7 @@ public class MainFrame extends JFrame {
 			table.getColumnModel().getColumn(0).setPreferredWidth(80);
 			table.getColumnModel().getColumn(1).setPreferredWidth(500);
 			table.getColumnModel().getColumn(2).setPreferredWidth(500);
+			table.getColumnModel().getColumn(3).setPreferredWidth(80);
 			
 			rs.close();
 			stmt.close();

@@ -3,6 +3,8 @@ Consumer class
 */
 package com.alex.filetracer;
 
+import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -33,7 +35,9 @@ public class FileIndexer implements Runnable {
                     break;
                 }
                 
-                db.insert(path);
+                long size = Files.isDirectory(path) ? 0L : Files.size(path);
+                db.insert(path, size);
+                
                 System.out.println("Indexing: " + path);
                 
                 int count = filesProcessed.incrementAndGet();

@@ -23,7 +23,7 @@ public class IndexDatabase {
             
             try (Statement stmt = connection.createStatement()) {
                 stmt.execute("PRAGMA journal_mode=WAL;");
-                String createTableSQL = "CREATE TABLE IF NOT EXISTS files (filename TEXT, filepath TEXT UNIQUE);";
+                String createTableSQL = "CREATE TABLE IF NOT EXISTS files (filename TEXT, filepath TEXT UNIQUE, size INTEGER);";
                 stmt.execute(createTableSQL);
             }
         } catch (SQLException e) {
@@ -31,14 +31,15 @@ public class IndexDatabase {
         }
     }
 
-    public synchronized void insert(Path file) {
-        String sql = "INSERT OR IGNORE INTO files(filename, filepath) VALUES(?, ?)";
+    public synchronized void insert(Path file, long size) {
+        String sql = "INSERT OR IGNORE INTO files(filename, filepath, size) VALUES(?, ?, ?)";
         
         String name = (file.getFileName() != null) ? file.getFileName().toString() : file.toString();
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, name);
             pstmt.setString(2, file.toString());
+            pstmt.setLong(3, size);
             pstmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
