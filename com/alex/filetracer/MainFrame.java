@@ -86,6 +86,8 @@ public class MainFrame extends JFrame {
 	
 	private String dir = "";
 	
+	private Order currentOrder = Order.ALPHA_ASC;
+	
     private static final String DB_URL = "jdbc:sqlite:file_index.db";
     
     static IndexDatabase db = new IndexDatabase();
@@ -162,7 +164,6 @@ public class MainFrame extends JFrame {
 		
 		table = new JTable();
 		scrollPane.setViewportView(table);
-		loadTable();
 		
 		table.getSelectionModel().addListSelectionListener(e -> {
 		    if (!e.getValueIsAdjusting()) {
@@ -281,9 +282,9 @@ public class MainFrame extends JFrame {
 		                	progressBar.setIndeterminate(false);
 		        		    progressBar.setStringPainted(false);
 		                    
-		                    loadTable();
+		                    loadTable(currentOrder);
 		                    clearInfoPanel();
-		                    clearSearchField();
+//		                    clearSearchField();
 		                });
 		            }
 		        });
@@ -343,7 +344,7 @@ public class MainFrame extends JFrame {
 	                	progressBar.setValue(0);
 	                    progressBar.setStringPainted(false);
 	                    
-	                    loadTable();
+	                    loadTable(currentOrder);
 	                    clearInfoPanel();
 	                    clearSearchField();
 	                    clearDirectoryField();
@@ -361,7 +362,7 @@ public class MainFrame extends JFrame {
 		stopButton.addActionListener(e -> {
 		    tracerApp.stopScan();
 		    
-		    loadTable();
+		    loadTable(currentOrder);
 		    
 		    progressBar.setIndeterminate(false);
 		    progressBar.setValue(0);
@@ -399,9 +400,10 @@ public class MainFrame extends JFrame {
 		
 		searchField.addActionListener(e -> {
 			String sub = searchField.getText().trim();
-
-			loadSearches(sub);
+			loadTable(currentOrder);
 		});
+		
+		loadTable(currentOrder); // no way this actually fixes the reboot table loading issue
 		
 		// Sort button
 		JComboBox sortComboBox = new JComboBox();
@@ -416,24 +418,26 @@ public class MainFrame extends JFrame {
 		sortComboBox.addActionListener(e -> {
 			switch (sortComboBox.getSelectedIndex()) {
 			case 0:
-				loadSorted(Order.ALPHA_ASC);
+				currentOrder = Order.ALPHA_ASC;
 				break;
 			case 1:
-				loadSorted(Order.ALPHA_DESC);
+				currentOrder = Order.ALPHA_DESC;
 				break;
 			case 2:
-				loadSorted(Order.RECENTLY_MOD);
+				currentOrder = Order.RECENTLY_MOD;
 				break;
 			case 3:
-				loadSorted(Order.OLDEST_MOD);
+				currentOrder = Order.OLDEST_MOD;
 				break;
 			case 4:
-				loadSorted(Order.SIZE_ASC);
+				currentOrder = Order.SIZE_ASC;
 				break;
 			case 5:
-				loadSorted(Order.SIZE_DESC);
+				currentOrder = Order.SIZE_DESC;
 				break;
 			}
+			
+			loadTable(currentOrder);
 		});
 		
 		// Filter button
@@ -504,114 +508,8 @@ public class MainFrame extends JFrame {
     	throughputLabel.setText("Throughput: " + throughput + " files/sec");
 	}
 	
-	// Display entire database on table
-	private void loadTable() {
-		try {
-			String sql = "SELECT filename, filepath, size, modified FROM files";
-			
-			Connection conn = DriverManager.getConnection(DB_URL);
-			
-			Statement stmt = conn.createStatement();
-			
-			ResultSet rs = stmt.executeQuery(sql);
-			
-			DefaultTableModel model = new DefaultTableModel();
-			table.setDefaultEditor(Object.class, null);
-			
-			model.addColumn("#");
-			model.addColumn("Name");
-			model.addColumn("Path");
-			model.addColumn("Size");
-			model.addColumn("Modified");
-			
-			int number = 1;
-			
-			DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").withZone(ZoneId.systemDefault());
-			
-			while(rs.next()) {
-				long size = rs.getLong("size");
-				long modified = rs.getLong("modified");
-				
-				String modifiedStr = formatter.format(Instant.ofEpochMilli(modified));
-				
-				model.addRow(new Object[] {number++, rs.getString("filename"), rs.getString("filepath"), formatFileSize(size), modifiedStr});
-			}
-			
-			table.setModel(model);
-			
-			table.getColumnModel().getColumn(0).setPreferredWidth(80);
-			table.getColumnModel().getColumn(1).setPreferredWidth(200);
-			table.getColumnModel().getColumn(2).setPreferredWidth(500);
-			table.getColumnModel().getColumn(3).setPreferredWidth(60);
-			table.getColumnModel().getColumn(4).setPreferredWidth(110);
-			
-			rs.close();
-			stmt.close();
-			conn.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-	
-	// Display search results on table
-	private void loadSearches(String sub) {
-		try {
-			String sql = "SELECT filename, filepath, size, modified FROM files WHERE filename LIKE ? OR filepath LIKE ?";
-			
-			Connection conn = DriverManager.getConnection(DB_URL);
-			
-			PreparedStatement stmt = conn.prepareStatement(sql);
-			
-			String search = "%" + sub + "%";
-			
-			stmt.setString(1,  search);
-			stmt.setString(2,  search);
-			
-			ResultSet rs = stmt.executeQuery();
-			
-			DefaultTableModel model = new DefaultTableModel();
-			table.setDefaultEditor(Object.class, null);
-			
-			model.addColumn("#");
-			model.addColumn("Name");
-			model.addColumn("Path");
-			model.addColumn("Size");
-			model.addColumn("Modified");
-			
-			int number = 1;
-			
-			DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").withZone(ZoneId.systemDefault());
-			
-			while(rs.next()) {
-				long size = rs.getLong("size");
-				long modified = rs.getLong("modified");
-				
-				String modifiedStr = formatter.format(Instant.ofEpochMilli(modified));
-				
-				model.addRow(new Object[] {number++, rs.getString("filename"), rs.getString("filepath"), formatFileSize(size), modifiedStr});
-			}
-			
-			table.setModel(model);
-			
-			table.getColumnModel().getColumn(0).setPreferredWidth(80);
-			table.getColumnModel().getColumn(1).setPreferredWidth(200);
-			table.getColumnModel().getColumn(2).setPreferredWidth(500);
-			table.getColumnModel().getColumn(3).setPreferredWidth(60);
-			table.getColumnModel().getColumn(4).setPreferredWidth(110);
-			
-			rs.close();
-			stmt.close();
-			conn.close();
-			
-			countEntriesLabel.setText("Entries count: " + (number - 1));
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-	
-	// Display sorted results on table
-	private void loadSorted(Order order) {
+	// Display sorted results on table, replaces loadTable() and loadSearches() since behaviorally they are the same
+	private void loadTable(Order order) {
 		try {
 			String algorithm;
 			
@@ -733,7 +631,7 @@ public class MainFrame extends JFrame {
 	        }
 
 	    } catch (IOException ex) {
-	    	
+	    	ex.printStackTrace();
 	    }
 	}
 		
