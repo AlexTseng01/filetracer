@@ -6,6 +6,7 @@
  * 4. Sort drop down menu replaced with clicking on database column names
  * 5. Locate empty files (0 bytes)
  * 6. Searching results in progress bar loading or flashing
+ * 7. Batching file inserts (optimization, no need to shard databases because batching already sort of does that)
  * */
 
 package com.alex.filetracer;
@@ -27,6 +28,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -505,7 +507,7 @@ public class MainFrame extends JFrame {
 	// Display entire database on table
 	private void loadTable() {
 		try {
-			String sql = "SELECT filename, filepath, size FROM files";
+			String sql = "SELECT filename, filepath, size, modified FROM files";
 			
 			Connection conn = DriverManager.getConnection(DB_URL);
 			
@@ -520,20 +522,28 @@ public class MainFrame extends JFrame {
 			model.addColumn("Name");
 			model.addColumn("Path");
 			model.addColumn("Size");
+			model.addColumn("Modified");
 			
 			int number = 1;
 			
+			DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").withZone(ZoneId.systemDefault());
+			
 			while(rs.next()) {
 				long size = rs.getLong("size");
-				model.addRow(new Object[] {number++, rs.getString("filename"), rs.getString("filepath"), formatFileSize(size)});
+				long modified = rs.getLong("modified");
+				
+				String modifiedStr = formatter.format(Instant.ofEpochMilli(modified));
+				
+				model.addRow(new Object[] {number++, rs.getString("filename"), rs.getString("filepath"), formatFileSize(size), modifiedStr});
 			}
 			
 			table.setModel(model);
 			
 			table.getColumnModel().getColumn(0).setPreferredWidth(80);
-			table.getColumnModel().getColumn(1).setPreferredWidth(500);
+			table.getColumnModel().getColumn(1).setPreferredWidth(200);
 			table.getColumnModel().getColumn(2).setPreferredWidth(500);
-			table.getColumnModel().getColumn(3).setPreferredWidth(80);
+			table.getColumnModel().getColumn(3).setPreferredWidth(60);
+			table.getColumnModel().getColumn(4).setPreferredWidth(110);
 			
 			rs.close();
 			stmt.close();
@@ -546,7 +556,7 @@ public class MainFrame extends JFrame {
 	// Display search results on table
 	private void loadSearches(String sub) {
 		try {
-			String sql = "SELECT filename, filepath, size FROM files WHERE filename LIKE ? OR filepath LIKE ? OR size LIKE ?";
+			String sql = "SELECT filename, filepath, size, modified FROM files WHERE filename LIKE ? OR filepath LIKE ?";
 			
 			Connection conn = DriverManager.getConnection(DB_URL);
 			
@@ -566,20 +576,28 @@ public class MainFrame extends JFrame {
 			model.addColumn("Name");
 			model.addColumn("Path");
 			model.addColumn("Size");
+			model.addColumn("Modified");
 			
 			int number = 1;
 			
+			DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").withZone(ZoneId.systemDefault());
+			
 			while(rs.next()) {
 				long size = rs.getLong("size");
-				model.addRow(new Object[] {number++, rs.getString("filename"), rs.getString("filepath"), formatFileSize(size)});
+				long modified = rs.getLong("modified");
+				
+				String modifiedStr = formatter.format(Instant.ofEpochMilli(modified));
+				
+				model.addRow(new Object[] {number++, rs.getString("filename"), rs.getString("filepath"), formatFileSize(size), modifiedStr});
 			}
 			
 			table.setModel(model);
 			
 			table.getColumnModel().getColumn(0).setPreferredWidth(80);
-			table.getColumnModel().getColumn(1).setPreferredWidth(500);
+			table.getColumnModel().getColumn(1).setPreferredWidth(200);
 			table.getColumnModel().getColumn(2).setPreferredWidth(500);
-			table.getColumnModel().getColumn(3).setPreferredWidth(80);
+			table.getColumnModel().getColumn(3).setPreferredWidth(60);
+			table.getColumnModel().getColumn(4).setPreferredWidth(110);
 			
 			rs.close();
 			stmt.close();
@@ -605,9 +623,11 @@ public class MainFrame extends JFrame {
 					algorithm = "ORDER BY filename COLLATE NOCASE DESC";
 					break;
 				case RECENTLY_MOD:
-//					break;
+					algorithm = "ORDER BY modified DESC";
+					break;
 				case OLDEST_MOD:
-//					break;
+					algorithm = "ORDER BY modified ASC";
+					break;
 				case SIZE_ASC:
 					algorithm = "ORDER BY size DESC";
 					break;
@@ -621,7 +641,7 @@ public class MainFrame extends JFrame {
 			
 			String search = searchField.getText().trim();
 			
-			String sql = "SELECT filename, filepath, size FROM files";
+			String sql = "SELECT filename, filepath, size, modified FROM files";
 			
 			if (!search.isEmpty()) {
 				sql += " WHERE filename LIKE ? OR filepath LIKE ?";
@@ -649,21 +669,29 @@ public class MainFrame extends JFrame {
 			model.addColumn("Name");
 			model.addColumn("Path");
 			model.addColumn("Size");
+			model.addColumn("Modified");
 			
 			int number = 1;
 			
+			DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").withZone(ZoneId.systemDefault());
+			
 			while(rs.next()) {
 				long size = rs.getLong("size");
-				model.addRow(new Object[] {number++, rs.getString("filename"), rs.getString("filepath"), formatFileSize(size)});
+				long modified = rs.getLong("modified");
+				
+				String modifiedStr = formatter.format(Instant.ofEpochMilli(modified));
+				
+				model.addRow(new Object[] {number++, rs.getString("filename"), rs.getString("filepath"), formatFileSize(size), modifiedStr});
 			}
 			
 			table.setModel(model);
 			
-			table.getColumnModel().getColumn(0).setPreferredWidth(80);
-			table.getColumnModel().getColumn(1).setPreferredWidth(500);
-			table.getColumnModel().getColumn(2).setPreferredWidth(500);
-			table.getColumnModel().getColumn(3).setPreferredWidth(80);
-			
+			table.getColumnModel().getColumn(0).setPreferredWidth(50);
+			table.getColumnModel().getColumn(1).setPreferredWidth(180);
+			table.getColumnModel().getColumn(2).setPreferredWidth(430);
+			table.getColumnModel().getColumn(3).setPreferredWidth(60);
+			table.getColumnModel().getColumn(4).setPreferredWidth(110);
+
 			rs.close();
 			stmt.close();
 			conn.close();
@@ -671,9 +699,7 @@ public class MainFrame extends JFrame {
 			e.printStackTrace();
 		}
 	}
-	
-	// Format file size
-	
+		
 	// Format file size
 	private String formatFileSize(long bytes) {
 	    if (bytes < 1024) {
@@ -690,9 +716,7 @@ public class MainFrame extends JFrame {
 
 	    return String.format("%.2f GB", bytes / (1024.0 * 1024.0 * 1024.0));
 	}
-	
-	// Open file in explorer
-	
+		
 	// Open a specific file in file explorer
 	private void openInFileExplorer(String filePath) {
 	    try {
@@ -712,9 +736,7 @@ public class MainFrame extends JFrame {
 	    	
 	    }
 	}
-	
-	// Clear information
-	
+		
 	// Clean up methods
 	private void clearInfoPanel() {
 		nameLabel.setText("Name:");
@@ -726,13 +748,11 @@ public class MainFrame extends JFrame {
 	}
 	
 	// Clear search field
-	
 	private void clearSearchField() {
 		searchField.setText("");
 	}
 	
 	// Clear directory field
-	
 	private void clearDirectoryField() {
 		directoryField.setText("");
 	}

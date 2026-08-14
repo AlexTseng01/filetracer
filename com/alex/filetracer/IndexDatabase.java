@@ -1,6 +1,3 @@
-/*
-Database class
-*/
 package com.alex.filetracer;
 
 import java.util.List;
@@ -23,7 +20,7 @@ public class IndexDatabase {
             
             try (Statement stmt = connection.createStatement()) {
                 stmt.execute("PRAGMA journal_mode=WAL;");
-                String createTableSQL = "CREATE TABLE IF NOT EXISTS files (filename TEXT, filepath TEXT UNIQUE, size INTEGER);";
+                String createTableSQL = "CREATE TABLE IF NOT EXISTS files (filename TEXT, filepath TEXT UNIQUE, size INTEGER, modified INTEGER);";
                 stmt.execute(createTableSQL);
             }
         } catch (SQLException e) {
@@ -31,15 +28,17 @@ public class IndexDatabase {
         }
     }
 
-    public synchronized void insert(Path file, long size) {
-        String sql = "INSERT OR IGNORE INTO files(filename, filepath, size) VALUES(?, ?, ?)";
+    public synchronized void insert(Path file, long size, long modified) {
+        String sql = "INSERT OR IGNORE INTO files(filename, filepath, size, modified) VALUES(?, ?, ?, ?)";
         
         String name = (file.getFileName() != null) ? file.getFileName().toString() : file.toString();
-
+        
+        // Refactor this code, it is creating a PreparedStatement like 100,000 times
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, name);
             pstmt.setString(2, file.toString());
             pstmt.setLong(3, size);
+            pstmt.setLong(4,  modified);
             pstmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();

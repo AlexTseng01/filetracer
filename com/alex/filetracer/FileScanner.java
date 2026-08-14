@@ -28,7 +28,9 @@ public class FileScanner implements Runnable {
         while (alive.get()) {
             try {
                 Path path = dirQueue.take();
-
+                
+                System.out.println("dirQueue: " + dirQueue.size() + "/" + dirQueue.remainingCapacity());
+                
                 if (path.equals(POISON)) {
                     break;
                 }
@@ -37,7 +39,7 @@ public class FileScanner implements Runnable {
 
                 try {
                     scan(path);
-                    System.out.println("Scanning: " + path);
+//                    System.out.println("Scanning: " + path);
                 } finally {
                     activeScanners.decrementAndGet();
                 }
