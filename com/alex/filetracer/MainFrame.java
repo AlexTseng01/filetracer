@@ -403,13 +403,36 @@ public class MainFrame extends JFrame {
 		
 		// Sort button
 		JComboBox sortComboBox = new JComboBox();
-		sortComboBox.setModel(new DefaultComboBoxModel(new String[] {"Alphabetical (A-Z)", "Alphabetical (Z-A)", "Recently modified", "Oldest modified"}));
+		sortComboBox.setModel(new DefaultComboBoxModel(new String[] {"Alphabetical (A-Z)", "Alphabetical (Z-A)", "Recently modified", "Oldest modified", "Largest size", "Smallest size"}));
 		sortComboBox.setBounds(667, 8, 144, 22);
 		toolPanel.add(sortComboBox);
 		
 		JLabel sortLabel = new JLabel("Sort by:");
 		sortLabel.setBounds(595, 14, 62, 14);
 		toolPanel.add(sortLabel);
+		
+		sortComboBox.addActionListener(e -> {
+			switch (sortComboBox.getSelectedIndex()) {
+			case 0:
+				loadSorted(Order.ALPHA_ASC);
+				break;
+			case 1:
+				loadSorted(Order.ALPHA_DESC);
+				break;
+			case 2:
+				loadSorted(Order.RECENTLY_MOD);
+				break;
+			case 3:
+				loadSorted(Order.OLDEST_MOD);
+				break;
+			case 4:
+				loadSorted(Order.SIZE_ASC);
+				break;
+			case 5:
+				loadSorted(Order.SIZE_DESC);
+				break;
+			}
+		});
 		
 		// Filter button
 		JLabel filterLabel = new JLabel("Filter by:");
@@ -515,7 +538,6 @@ public class MainFrame extends JFrame {
 			rs.close();
 			stmt.close();
 			conn.close();
-			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -570,6 +592,88 @@ public class MainFrame extends JFrame {
 		}
 	}
 	
+	// Display sorted results on table
+	private void loadSorted(Order order) {
+		try {
+			String algorithm;
+			
+			switch (order) {
+				case ALPHA_ASC:
+					algorithm = "ORDER BY filename COLLATE NOCASE ASC";
+					break;
+				case ALPHA_DESC:
+					algorithm = "ORDER BY filename COLLATE NOCASE DESC";
+					break;
+				case RECENTLY_MOD:
+//					break;
+				case OLDEST_MOD:
+//					break;
+				case SIZE_ASC:
+					algorithm = "ORDER BY size DESC";
+					break;
+				case SIZE_DESC:
+					algorithm = "ORDER BY size ASC";
+					break;
+				default:
+					algorithm = "ORDER BY filename COLLATE NOCASE ASC";
+					break;
+			}
+			
+			String search = searchField.getText().trim();
+			
+			String sql = "SELECT filename, filepath, size FROM files";
+			
+			if (!search.isEmpty()) {
+				sql += " WHERE filename LIKE ? OR filepath LIKE ?";
+			}
+			
+			sql += " " + algorithm;
+			
+			Connection conn = DriverManager.getConnection(DB_URL);
+			
+			PreparedStatement stmt = conn.prepareStatement(sql);
+			
+			if (!search.isEmpty()) {
+				String searchPattern = "%" + search + "%";
+
+				stmt.setString(1, searchPattern);
+				stmt.setString(2, searchPattern);
+			}
+			
+			ResultSet rs = stmt.executeQuery();
+			
+			DefaultTableModel model = new DefaultTableModel();
+			table.setDefaultEditor(Object.class, null);
+			
+			model.addColumn("#");
+			model.addColumn("Name");
+			model.addColumn("Path");
+			model.addColumn("Size");
+			
+			int number = 1;
+			
+			while(rs.next()) {
+				long size = rs.getLong("size");
+				model.addRow(new Object[] {number++, rs.getString("filename"), rs.getString("filepath"), formatFileSize(size)});
+			}
+			
+			table.setModel(model);
+			
+			table.getColumnModel().getColumn(0).setPreferredWidth(80);
+			table.getColumnModel().getColumn(1).setPreferredWidth(500);
+			table.getColumnModel().getColumn(2).setPreferredWidth(500);
+			table.getColumnModel().getColumn(3).setPreferredWidth(80);
+			
+			rs.close();
+			stmt.close();
+			conn.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	// Format file size
+	
 	// Format file size
 	private String formatFileSize(long bytes) {
 	    if (bytes < 1024) {
@@ -586,6 +690,8 @@ public class MainFrame extends JFrame {
 
 	    return String.format("%.2f GB", bytes / (1024.0 * 1024.0 * 1024.0));
 	}
+	
+	// Open file in explorer
 	
 	// Open a specific file in file explorer
 	private void openInFileExplorer(String filePath) {
@@ -607,6 +713,8 @@ public class MainFrame extends JFrame {
 	    }
 	}
 	
+	// Clear information
+	
 	// Clean up methods
 	private void clearInfoPanel() {
 		nameLabel.setText("Name:");
@@ -617,11 +725,16 @@ public class MainFrame extends JFrame {
 		typeLabel.setText("Type:");
 	}
 	
+	// Clear search field
+	
 	private void clearSearchField() {
 		searchField.setText("");
 	}
 	
+	// Clear directory field
+	
 	private void clearDirectoryField() {
 		directoryField.setText("");
 	}
+	
 }

@@ -35,7 +35,8 @@ public class FileIndexer implements Runnable {
                     break;
                 }
                 
-                long size = Files.isDirectory(path) ? 0L : Files.size(path);
+                long size = Files.size(path);
+                
                 db.insert(path, size);
                 
                 System.out.println("Indexing: " + path);
