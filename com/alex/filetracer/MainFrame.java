@@ -124,7 +124,7 @@ public class MainFrame extends JFrame {
 		setResizable(false);
 		setTitle("FileTracer v0.0.1");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 858, 827);
+		setBounds(100, 100, 795, 827);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
@@ -132,7 +132,7 @@ public class MainFrame extends JFrame {
 		
 		// Information 1 panel
 		JPanel infoPanel_A = new JPanel();
-		infoPanel_A.setBounds(10, 101, 821, 24);
+		infoPanel_A.setBounds(10, 101, 758, 24);
 		contentPane.add(infoPanel_A);
 		infoPanel_A.setLayout(null);
 		
@@ -153,7 +153,7 @@ public class MainFrame extends JFrame {
 		
 		// Table panel
 		JPanel tablePanel = new JPanel();
-		tablePanel.setBounds(10, 136, 821, 443);
+		tablePanel.setBounds(10, 136, 758, 443);
 		contentPane.add(tablePanel);
 		tablePanel.setLayout(new GridLayout(0, 1, 0, 0));
 		
@@ -245,7 +245,7 @@ public class MainFrame extends JFrame {
 		
 		// Tool panel
 		JPanel toolPanel = new JPanel();
-		toolPanel.setBounds(10, 11, 821, 79);
+		toolPanel.setBounds(10, 11, 758, 79);
 		contentPane.add(toolPanel);
 		toolPanel.setLayout(null);
 		
@@ -375,11 +375,11 @@ public class MainFrame extends JFrame {
 		
 		// Directory field
 		JLabel directoryLabel = new JLabel("Directory:");
-		directoryLabel.setBounds(268, 17, 58, 14);
+		directoryLabel.setBounds(235, 17, 58, 14);
 		toolPanel.add(directoryLabel);
 		
 		directoryField = new JTextField();
-		directoryField.setBounds(336, 11, 186, 20);
+		directoryField.setBounds(303, 11, 186, 20);
 		toolPanel.add(directoryField);
 		directoryField.setColumns(10);
 		directoryField.addActionListener(e -> {
@@ -389,11 +389,11 @@ public class MainFrame extends JFrame {
 		
 		// Search field
 		JLabel searchLabel = new JLabel("Search:");
-		searchLabel.setBounds(268, 51, 58, 14);
+		searchLabel.setBounds(235, 51, 58, 14);
 		toolPanel.add(searchLabel);
 		
 		searchField = new JTextField();
-		searchField.setBounds(336, 45, 186, 20);
+		searchField.setBounds(303, 45, 186, 20);
 		toolPanel.add(searchField);
 		searchField.setColumns(10);
 		
@@ -406,11 +406,11 @@ public class MainFrame extends JFrame {
 		// Sort button
 		JComboBox sortComboBox = new JComboBox();
 		sortComboBox.setModel(new DefaultComboBoxModel(new String[] {"Alphabetical (A-Z)", "Alphabetical (Z-A)", "Recently modified", "Oldest modified", "Largest size", "Smallest size"}));
-		sortComboBox.setBounds(667, 8, 144, 22);
+		sortComboBox.setBounds(602, 11, 144, 22);
 		toolPanel.add(sortComboBox);
 		
 		JLabel sortLabel = new JLabel("Sort by:");
-		sortLabel.setBounds(595, 14, 62, 14);
+		sortLabel.setBounds(530, 17, 62, 14);
 		toolPanel.add(sortLabel);
 		
 		sortComboBox.addActionListener(e -> {
@@ -438,53 +438,53 @@ public class MainFrame extends JFrame {
 		
 		// Filter button
 		JLabel filterLabel = new JLabel("Filter by:");
-		filterLabel.setBounds(595, 47, 62, 14);
+		filterLabel.setBounds(530, 50, 62, 14);
 		toolPanel.add(filterLabel);
 		
 		JComboBox filterComboBox = new JComboBox();
 		filterComboBox.setModel(new DefaultComboBoxModel(new String[] {"All", "Folders", "Files"}));
-		filterComboBox.setBounds(667, 43, 144, 22);
+		filterComboBox.setBounds(602, 46, 144, 22);
 		toolPanel.add(filterComboBox);
 		
 		// Information 2 panel
 		JPanel infoPanel_B = new JPanel();
-		infoPanel_B.setBounds(10, 590, 821, 160);
+		infoPanel_B.setBounds(10, 590, 758, 160);
 		contentPane.add(infoPanel_B);
 		infoPanel_B.setLayout(null);
 		
 		// Display file name
 		nameLabel = new JLabel("Name:");
-		nameLabel.setBounds(10, 11, 801, 14);
+		nameLabel.setBounds(10, 11, 738, 14);
 		infoPanel_B.add(nameLabel);
 		
 		// Display full path
 		pathLabel = new JLabel("Path:");
-		pathLabel.setBounds(10, 36, 801, 14);
+		pathLabel.setBounds(10, 36, 738, 14);
 		infoPanel_B.add(pathLabel);
 		
 		// Display file size
 		sizeLabel = new JLabel("Size:");
-		sizeLabel.setBounds(10, 61, 801, 14);
+		sizeLabel.setBounds(10, 61, 738, 14);
 		infoPanel_B.add(sizeLabel);
 		
 		// Display creation date
 		creationLabel = new JLabel("Created:");
-		creationLabel.setBounds(10, 86, 801, 14);
+		creationLabel.setBounds(10, 86, 738, 14);
 		infoPanel_B.add(creationLabel);
 		
 		// Display modified date
 		modifiedLabel = new JLabel("Modified:");
-		modifiedLabel.setBounds(10, 111, 801, 14);
+		modifiedLabel.setBounds(10, 111, 738, 14);
 		infoPanel_B.add(modifiedLabel);
 		
 		// Display file type
 		typeLabel = new JLabel("Type:");
-		typeLabel.setBounds(10, 136, 801, 14);
+		typeLabel.setBounds(10, 136, 738, 14);
 		infoPanel_B.add(typeLabel);
 		
 		// Progress bar
 		JPanel progressPanel = new JPanel();
-		progressPanel.setBounds(10, 761, 821, 24);
+		progressPanel.setBounds(10, 761, 758, 24);
 		contentPane.add(progressPanel);
 		progressPanel.setLayout(new GridLayout(0, 1, 0, 0));
 		
