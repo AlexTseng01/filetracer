@@ -501,6 +501,8 @@ public class MainFrame extends JFrame {
 		infoPanel_B.setBorder(BorderFactory.createDashedBorder(Color.GRAY));
 	}
 	
+	// Helper methods
+	
 	// Update labels
 	private void loadLabels(int count, String time, int throughput) {
 		countEntriesLabel.setText("Entries count: " + count);
@@ -559,7 +561,7 @@ public class MainFrame extends JFrame {
 			}
 			
 			ResultSet rs = stmt.executeQuery();
-			
+						
 			DefaultTableModel model = new DefaultTableModel();
 			table.setDefaultEditor(Object.class, null);
 			
@@ -581,6 +583,8 @@ public class MainFrame extends JFrame {
 				
 				model.addRow(new Object[] {number++, rs.getString("filename"), rs.getString("filepath"), formatFileSize(size), modifiedStr});
 			}
+			
+			countEntriesLabel.setText("Entries count: " + model.getRowCount());
 			
 			table.setModel(model);
 			

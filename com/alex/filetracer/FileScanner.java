@@ -29,7 +29,7 @@ public class FileScanner implements Runnable {
             try {
                 Path path = dirQueue.take();
                 
-                System.out.println("dirQueue: " + dirQueue.size() + "/" + dirQueue.remainingCapacity());
+//                System.out.println("dirQueue: " + dirQueue.size() + "/" + dirQueue.remainingCapacity());
                 
                 if (path.equals(POISON)) {
                     break;
